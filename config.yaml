@@ -1,0 +1,38 @@
+# Server configurations
+server:
+  ip: '172.16.20.163'  # Main server IP address
+  welding_k2:
+    port: 5002  # Welding K2 service port
+
+# File path configurations
+paths:
+  welding_k2:
+    save_img: 'images/welding_k2'  # Directory for saving welding images
+    # Dynamic URL construction using server IP and port
+    # url_img: 'http://${server.ip}:${server.welding_k2.port}/${paths.welding_k2.save_img}'
+
+# AI model configurations
+models:
+  welding_k2:
+    # YOLO model paths for different channels
+    ch1: '/mnt/xcd/code/ai_special_exam/weights/11n/ch1_welding_switch_11n_detect_11_5.pt'
+    ch2: '/mnt/xcd/code/ai_special_exam/weights/11n/ch2_welding_desk_cls_11n_115.pt'
+    ch3: '/mnt/xcd/code/ai_special_exam/weights/11n/ch3_oil_barrel_11n_detect_115.pt'
+    ch4: '/mnt/xcd/code/ai_special_exam/weights/11n/ch4_main_switch_11n_detect_115.pt'
+    ch5: '/mnt/xcd/code/ai_special_exam/weights/11n/ch5_mask_gloves_wire_11n_detect_115.pt'
+    ch6: '/mnt/xcd/code/ai_special_exam/weights/11n/ch6_wearing_detect_115.pt'
+
+# RTSP stream configurations
+rtsp:
+  base_url: 'rtsp://admin:yaoan1234@172.16.22.'
+  common_path: '/cam/realmonitor?channel=1&subtype=0'
+  welding_k2:
+    channels: [230, 231, 247, 232, 234, 235]
+
+# Region of interest definitions (coordinates in [x, y] format)
+regions:
+  # Polygon coordinates for different detection zones
+  welding_k2:
+    welding_operation: [[6, 954], [4, 1437], [1054, 1436], [1051, 954]]  # Welding operation area
+    basket_empty_load: [[752, 855], [712, 969], [836, 1020], [896, 918]]  # Basket loading area
+    basket_warning_zone: [[1250, 0], [1256, 469], [2048, 492], [2048, 0]]  # Warning zone area
