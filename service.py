@@ -1,4 +1,4 @@
-from config import DetectionSettings
+from schemas import DetectionSettings
 from video import VideoStreamManager
 from inference import YOLOInferenceManager
 from detection import DetectionResultProcessor
@@ -31,7 +31,6 @@ class DetectionService:
         self.initialize_managers()
         self.stream_manager.start_streams()
         self.inference_manager.start_inference()
-        self.init_exam_variables()#每次开始检测时，初始化检测变量
         self.is_running = True
 
     def stop(self):

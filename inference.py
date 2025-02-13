@@ -1,4 +1,3 @@
-
 from multiprocessing import Queue, Event, Process
 from ultralytics import YOLO
 import logging

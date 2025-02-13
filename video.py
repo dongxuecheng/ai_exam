@@ -1,5 +1,5 @@
 from multiprocessing import Queue, Event, Process
-from config import StreamConfig
+from schemas import StreamConfig
 import cv2
 import logging
 from contextlib import contextmanager
