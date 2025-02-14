@@ -1,12 +1,11 @@
 from multiprocessing import Queue, Event, Process
 from ultralytics import YOLO
-import logging
-from detection import DetectionResultProcessor
+from .processor import ResultProcessor
+from ..core import logger
 
-logger = logging.getLogger("uvicorn")
 
-class YOLOInferenceManager:
-    def __init__(self, weights_paths: list[str], frame_queues: list[Queue],result_processor: DetectionResultProcessor):
+class YOLOPredictor:
+    def __init__(self, weights_paths: list[str], frame_queues: list[Queue],result_processor: ResultProcessor):
         self.weights_paths = weights_paths
         self.frame_queues = frame_queues
         self.processes: list[Process] = []

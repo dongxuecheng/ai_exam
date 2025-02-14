@@ -1,12 +1,12 @@
 from multiprocessing import Queue, Event, Process
-from schemas import StreamConfig
+from ..schemas import StreamConfig
 import cv2
-import logging
+from ..core import logger
 from contextlib import contextmanager
 
-logger = logging.getLogger("uvicorn")
 
-class VideoStreamManager:
+
+class VideoStreamer:
     def __init__(self, stream_configs: list[StreamConfig],num_models: int):
         """
         初始化视频流管理器

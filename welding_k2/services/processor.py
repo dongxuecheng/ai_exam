@@ -1,12 +1,11 @@
-import logging
+
 import cv2
 from multiprocessing import Array,Manager,Value
 from datetime import datetime
 import numpy as np
+from ..core import logger
 
-logger = logging.getLogger("uvicorn")
-
-class DetectionResultProcessor:
+class ResultProcessor:
     def __init__(self,weights_paths: list[str],images_dir, img_url_path):
         self.reset_flag = Array('b', [False] * 6)
         self.exam_flag = Array('b', [False] * 24)
@@ -154,7 +153,7 @@ class DetectionResultProcessor:
         if not self.exam_status.value and weights_path in reset_steps:
             flag, step, message = reset_steps[weights_path]
             if flag and step not in self.reset_imgs:
-                logging.info(message)
+                logger.info(message)
                 self.save_image_reset(self.reset_imgs, r, step)
 
 

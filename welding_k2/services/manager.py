@@ -1,12 +1,12 @@
-from schemas import DetectionSettings
-from video import VideoStreamManager
-from inference import YOLOInferenceManager
-from detection import DetectionResultProcessor
+from ..schemas import ServerConfig
+from .streamer import VideoStreamer
+from .predictor import YOLOPredictor
+from .processor import ResultProcessor
 
 
-class DetectionService:
-    def __init__(self, settings: DetectionSettings):
-        self.settings = settings
+class DetectionManager:
+    def __init__(self, config: ServerConfig):
+        self.config = config
         self.is_running = False
         self.stream_manager = None
         self.inference_manager = None
@@ -14,16 +14,16 @@ class DetectionService:
 
     def initialize_managers(self):
         if not self.stream_manager or not self.inference_manager:
-            self.result_processor = DetectionResultProcessor(
-                self.settings.weights_paths,
-                self.settings.images_dir,
-                self.settings.img_url_path)
-            self.stream_manager = VideoStreamManager(
-                self.settings.stream_configs,
-                len(self.settings.weights_paths)
+            self.result_processor = ResultProcessor(
+                self.config.weights_paths,
+                self.config.images_dir,
+                self.config.img_url_path)
+            self.stream_manager = VideoStreamer(
+                self.config.stream_configs,
+                len(self.config.weights_paths)
             )
-            self.inference_manager = YOLOInferenceManager(
-                self.settings.weights_paths,
+            self.inference_manager = YOLOPredictor(
+                self.config.weights_paths,
                 self.stream_manager.frame_queues,
                 self.result_processor)
 

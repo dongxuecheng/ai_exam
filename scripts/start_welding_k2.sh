@@ -17,11 +17,12 @@ if lsof -Pi :${PORT} -sTCP:LISTEN -t >/dev/null ; then
     # Wait a moment for processes to fully terminate
     sleep 2
 fi
-
+# Change to the welding_k2 directory
+cd /mnt/xcd/code/ai_exam
 # Activate conda environment
 eval "$(conda shell.bash hook)"
 conda activate fastapi
 
 # Run FastAPI application
 echo "Starting FastAPI application..."
-uvicorn app_welding_k2:app --host ${HOST} --port ${PORT}
+uvicorn welding_k2.main:app --host ${HOST} --port ${PORT}
