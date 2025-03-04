@@ -1,4 +1,3 @@
-
 import cv2
 from multiprocessing import Array,Manager,Value
 from datetime import datetime
@@ -34,61 +33,64 @@ class ResultProcessor:
     def main_fun(self, r, weights_path):
 
         if weights_path==self.weights_paths[0]:#目标检测（油桶和扫把）
-            self.reset_flag[0] = True#默认油桶没有检测到，所以需要复位到危险区域
-            self.exam_flag[0]=True#默认油桶没有检测到，所以需要排除油桶已完成
-
-            classes = r.boxes.cls.cpu().numpy()
-            for cls in classes:
-                if r.names[int(cls)] == "oil_tank":
-                    self.reset_flag[0] = False#表面油桶在危险区域，所以不需要复位
-                    self.exam_flag[0]=False#油桶已经检测到，所以还没有排除油桶
-                elif r.names[int(cls)] == "sweep":
-                    self.exam_flag[21]=True#识别到扫把，代表场地清理已完成
-
-        elif weights_path==self.weights_paths[1]:#目标检测，搭铁线
             boxes = r.boxes.xyxy.cpu().numpy()
             classes = r.boxes.cls.cpu().numpy()
             for box, cls in zip(boxes, classes):
-                if r.names[int(cls)] == "grounding_wire":
-                    if self.is_boxes_intersect(tuple(map(int, box)), (851, 347, 2172, 1378)):
-                        self.exam_flag[9]=True #搭铁线连接焊台
+                if r.names[int(cls)] == "oil_tank":
+                    if self.is_boxes_intersect(tuple(map(int, box)), (0, 0, 1920, 1080)):
+                        self.reset_flag[0] = False#表面油桶在危险区域，所以不需要复位
+                        self.exam_flag[0]=False#油桶已经检测到，所以还没有排除油桶
                     else:
-                        if self.exam_flag[9]:
-                            self.exam_flag[14]=False #搭铁线已取下
+                        self.reset_flag[0] = True#表面油桶不在危险区域，所以需要复位
+                        self.exam_flag[0]=True#油桶已经排除在危险区域外
 
-        elif weights_path==self.weights_paths[2]:#分类，焊台
-            label=r.names[r.probs.top1]
-            if label=="welding":
-                self.exam_flag[11]=True
-                self.exam_flag[12]=True
-                self.exam_flag[13]=True
-                #self.exam_flag[14]=True
-                self.exam_flag[15]=True
+                elif r.names[int(cls)] == "sweep":
+                    if self.is_boxes_intersect(tuple(map(int, box)), (0, 0, 1920, 1080)):
+                        self.exam_flag[21]=False
 
-        elif weights_path==self.weights_paths[3]:#目标检测开关灯，焊机，焊枪，搭铁线
+
+        elif weights_path==self.weights_paths[1]:#焊机垂直向下的分割，检测焊机二次线的视角
+            if r.masks is not None:
+                masks = r.masks.xy #已经是list数组了
+                for mask in masks:
+                    iou1=self.calculate_mask_rect_iou(mask, (622, 472, 1039, 886))#焊机区域
+                    iou2=self.calculate_mask_rect_iou(mask, (0, 0, 1920, 1080))#焊枪二次线区域
+                    iou3=self.calculate_mask_rect_iou(mask, (870, 907, 1505, 1282))#接地夹二次线区域
+                    logger.info(f"iou1:{iou1},iou2:{iou2},iou3:{iou3}")
+                    if iou1>0.5:
+                        self.exam_flag[4]=True#焊机区域检测到
+                        self.exam_flag[5]=True#焊机接地线直接判定完成
+                    if iou2>0.5 and iou1<0.5:
+                        self.exam_flag[2]=True#焊枪二次线区域检测到
+                    if iou3>0.5 and iou1<0.5:
+                        self.exam_flag[3]=True#接地夹二次线区域检测到
+
+
+        
+
+        elif weights_path==self.weights_paths[2]:#目标检测开关灯，焊机，焊枪，搭铁线
             boxes = r.boxes.xyxy.cpu().numpy()
             classes = r.boxes.cls.cpu().numpy()
             
             self.reset_flag[2] = True
             self.reset_flag[1] = True
 
-            self.exam_flag[2]=True
-            self.exam_flag[3]=True
-
             for box, cls in zip(boxes, classes):
                 if r.names[int(cls)] == "welding_gun":
                     if self.is_boxes_intersect(tuple(map(int, box)), (622, 472, 1039, 886)):#(x1,y1,x2,y2)
                         self.reset_flag[1] = False #焊枪在指定区域，不需要复位
-                        self.exam_flag[2]=False
+                        if self.exam_flag[13]:#完成焊接作业
+                            self.exam_flag[22]=True
                     else:
-                        self.exam_flag[2]=True 
+                        self.exam_flag[22]=False 
 
                 elif r.names[int(cls)] == "grounding_wire":
                     if self.is_boxes_intersect(tuple(map(int, box)), (0, 0, 1920, 1080)):
                         self.reset_flag[2] = False
-                        self.exam_flag[3]=False
+                        if self.exam_flag[13]:
+                            self.exam_flag[23]=True
                     else:
-                        self.exam_flag[3]=True
+                        self.exam_flag[23]=False
 
                 elif r.names[int(cls)] == "red_light_on":#红灯亮,打开总开关
                     self.reset_flag[3]=True
@@ -108,25 +110,34 @@ class ResultProcessor:
                     if self.exam_flag[7]:
                         self.exam_flag[16]=True
 
-        elif weights_path==self.weights_paths[4]:
-            keypoints = r.keypoints.xy.cpu().numpy()
-            #一次线区域
-            LINE_REGION=[(1787, 442), (1498, 1378), (1765, 1378), (1993, 502)]
-            WELDING_MACHINE_REGION=[(870, 907), (867, 1282), (152, 1282), (1505, 899)]
-            if keypoints.size != 0:   
-                for keypoint in keypoints:
-                    left_wrist = tuple(map(int,keypoint[9]))#(x1,y1)
-                    right_wrist = tuple(map(int,keypoint[10]))
-                    if self.is_point_in_polygon(left_wrist, LINE_REGION):
-                        self.exam_flag[1]=True
-                    if self.is_point_in_polygon(right_wrist, LINE_REGION):
-                        self.exam_flag[1]=True
-                    if self.is_point_in_polygon(left_wrist, WELDING_MACHINE_REGION):
-                        self.exam_flag[4]=True
-                        self.exam_flag[5]=True
-                    if self.is_point_in_polygon(right_wrist, WELDING_MACHINE_REGION):
-                        self.exam_flag[4]=True
-                        self.exam_flag[5]=True
+        if weights_path==self.weights_paths[3]:#目标检测（焊台上的搭铁线，焊件，刷子，铁锤）
+            boxes = r.boxes.xyxy.cpu().numpy()
+            classes = r.boxes.cls.cpu().numpy()
+            for box, cls in zip(boxes, classes):
+                if r.names[int(cls)] == "grounding_wire":#接地夹
+                    if self.is_boxes_intersect(tuple(map(int, box)), (0, 0, 1920, 1080)):
+                        self.exam_flag[9]=True#夹好接地夹
+
+
+                elif r.names[int(cls)] == "welding_piece":#焊件
+                    if self.is_boxes_intersect(tuple(map(int, box)), (0, 0, 1920, 1080)):
+                        self.exam_flag[11]=False
+                
+                elif r.names[int(cls)] == "brush":#刷子
+                    if self.exam_flag[13]:
+                        self.exam_flag[19]=True
+                elif r.names[int(cls)] == "hammer":#铁锤
+                    if self.exam_flag[13]:
+                        self.exam_flag[19]=True
+
+        elif weights_path==self.weights_paths[4]:#分类，焊台
+            label=r.names[r.probs.top1]
+            if label=="welding":
+   
+                self.exam_flag[12]=True
+                self.exam_flag[13]=True
+
+
             
         elif weights_path==self.weights_paths[5]:# 焊机开关
             
@@ -138,7 +149,17 @@ class ResultProcessor:
                 elif r.names[int(cls)] == "close":
                     if self.exam_flag[8]:
                         self.exam_flag[15]=True           
-            pass
+
+        elif weights_path==self.weights_paths[6]:#焊机垂直向下的分割，检测焊机二次线的视角
+            if r.masks is not None:
+                masks = r.masks.xy #已经是list数组了
+                for mask in masks:
+                    iou=self.calculate_mask_rect_iou(mask, (622, 472, 1039, 886))#焊机区域
+
+                    logger.info(f"焊机一次线iou:{iou}")
+                    if iou>0.5:
+                        self.exam_flag[1]=True
+             
             
         self.save_step(r,weights_path)
     
@@ -271,3 +292,43 @@ class ResultProcessor:
         result = cv2.pointPolygonTest(contour, tuple(point), False)
         
         return result >= 0
+
+    @staticmethod
+    def calculate_mask_rect_iou(mask: np.ndarray, rect: tuple[int, int, int, int]) -> float:
+        """
+        计算掩码与矩形区域的交并比(IoU)
+        
+        参数:
+            mask: 掩码点的坐标数组，形状为(n,2)，每行是一个(x,y)点坐标
+            rect: 矩形区域，格式为(x1, y1, x2, y2)，表示左上角和右下角坐标
+            
+        返回:
+            float: IoU值，范围从0到1
+        """
+        if len(mask) == 0:
+            return 0.0
+        
+        # 创建掩码的二值图像
+        x1_rect, y1_rect, x2_rect, y2_rect = rect
+        width = max(x2_rect, np.max(mask[:, 0]).astype(int)) + 1
+        height = max(y2_rect, np.max(mask[:, 1]).astype(int)) + 1
+        
+        # 创建掩码图像
+        mask_img = np.zeros((height, width), dtype=np.uint8)
+        mask_points = np.array(mask, dtype=np.int32).reshape((-1, 1, 2))
+        cv2.fillPoly(mask_img, [mask_points], 1)
+        
+        # 创建矩形图像
+        rect_img = np.zeros((height, width), dtype=np.uint8)
+        cv2.rectangle(rect_img, (x1_rect, y1_rect), (x2_rect, y2_rect), 1, -1)
+        
+        # 计算交集和并集
+        intersection = np.logical_and(mask_img, rect_img).sum()
+        union = np.logical_or(mask_img, rect_img).sum()
+        
+        # 计算IoU
+        if union == 0:
+            return 0.0
+        iou = intersection / union
+        
+        return iou

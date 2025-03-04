@@ -6,7 +6,7 @@ conda activate fastapi
 
 # Configuration
 PORT=5002
-HOST="0.0.0.0"
+HOST="172.16.22.90"
 
 # Check if port is in use and kill processes
 echo "Checking port ${PORT}..."
@@ -18,7 +18,7 @@ if lsof -Pi :${PORT} -sTCP:LISTEN -t >/dev/null ; then
     sleep 2
 fi
 # Change to the welding_k2 directory
-cd /home/dxc/ai_exam
+cd /home/xcd/ai_exam
 # Activate conda environment
 eval "$(conda shell.bash hook)"
 conda activate fastapi

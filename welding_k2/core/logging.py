@@ -9,8 +9,10 @@ def setup_logging():
     logger = logging.getLogger("uvicorn")
     
     # Create logs directory if it doesn't exist
-    log_dir = Path("/home/dxc/ai_exam/logs/welding_k2")
-    log_dir.mkdir(exist_ok=True)
+    # 使用相对于项目根目录的路径
+    base_dir = Path(__file__).parent.parent.parent  # 导航到项目根目录
+    log_dir = base_dir / "logs" / "welding_k2"
+    log_dir.mkdir(parents=True, exist_ok=True)  # 使用parents=True确保创建完整路径
     
     # Create timestamp for log filename
     timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M")
