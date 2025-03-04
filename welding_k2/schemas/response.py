@@ -14,6 +14,7 @@ class ExamStepResponse(BaseModel):
     """考试步骤响应模型"""
     step: str
     image: str
+    score: int
 
 class ResetStatusResponse(StatusResponse):
     """复位状态响应模型"""

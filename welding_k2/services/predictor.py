@@ -78,7 +78,7 @@ class YOLOPredictor:
 
     def _run_inference(self, model, frame, weights_path):
         try:
-            results = model.predict(frame,verbose=False,device=1,conf=0.6)
+            results = model.predict(frame,verbose=False,device=0,conf=0.6)
 
             self.result_processor.main_fun(results[0], weights_path)
         except Exception as e:

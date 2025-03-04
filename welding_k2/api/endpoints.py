@@ -54,6 +54,7 @@ async def reset_status(service: DetectionManagerDep) -> ResetStatusResponse:
     try:
         logger.info("Reset status")
 
+        #TODO 这里需要加not
         if not any(service.get_rest_flag()):  # 表明不需要复位,如果 welding_reset_flag 列表中的所有元素都为 False，则 any(welding_reset_flag) 返回 False，not any(welding_reset_flag) 返回 True。
             logger.info('reset_all!')
             return ResetStatusResponse(status="RESET_ALL")
@@ -97,7 +98,7 @@ async def exam_status(service: DetectionManagerDep) -> ExamStatusResponse:
             return ExamStatusResponse(status="NONE")
         
         exam_steps = [
-            {"step": re.search(r'welding_exam_(\d+)', value).group(1), "image": service.get_exam_imgs().get(value)}
+            {"step": re.search(r'welding_exam_(\d+)', value).group(1), "image": service.get_exam_imgs().get(value), "score": service.get_exam_score().get(value)}
             for value in service.get_exam_order()
         ]
         return ExamStatusResponse(status="SUCCESS", data=exam_steps)

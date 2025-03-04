@@ -13,6 +13,7 @@ class ResultProcessor:
         self.reset_imgs = self.manager.dict()
         self.exam_imgs = self.manager.dict()
         self.exam_order = self.manager.list()
+        self.exam_score = self.manager.dict()#某一步骤考试分数
         self.exam_status = Value('b', False)
         self.weights_paths = weights_paths
         self.images_dir=images_dir
@@ -61,7 +62,7 @@ class ResultProcessor:
                 self.exam_flag[11]=True
                 self.exam_flag[12]=True
                 self.exam_flag[13]=True
-                self.exam_flag[14]=True
+                #self.exam_flag[14]=True
                 self.exam_flag[15]=True
 
         elif weights_path==self.weights_paths[3]:#目标检测开关灯，焊机，焊枪，搭铁线
@@ -133,54 +134,80 @@ class ResultProcessor:
             for cls in classes:
                 if r.names[int(cls)] == "open":
                     self.reset_flag[5] = True
-                    self.exam_flag[5]=True
+                    self.exam_flag[8]=True
                 elif r.names[int(cls)] == "close":
-                    if self.exam_flag[5]:
+                    if self.exam_flag[8]:
                         self.exam_flag[15]=True           
             pass
             
         self.save_step(r,weights_path)
     
     def save_step(self,r,weights_path):
+        # reset_steps = {
+        #     self.weights_paths[3]: (self.reset_flag[1], 'reset_step_2', "当前焊枪没有复位"),
+        #     self.weights_paths[0]: (self.reset_flag[0], 'reset_step_1', "当前油桶没有复位"),
+        #     self.weights_paths[2]: (self.reset_flag[4], 'reset_step_5', "当前焊机开关没有复位"),
+        #     self.weights_paths[3]: (self.reset_flag[2], 'reset_step_3', "搭铁线没有复位"),
+        #     self.weights_paths[4]: (self.reset_flag[3], 'reset_step_4', "当前焊件没有复位")
+        # }
         reset_steps = {
-            self.weights_paths[0]: (self.reset_flag[1], 'reset_step_2', "当前总开关没有复位"),
-            self.weights_paths[1]: (self.reset_flag[0], 'reset_step_1', "当前油桶没有复位"),
-            self.weights_paths[2]: (self.reset_flag[4], 'reset_step_5', "当前焊机开关没有复位"),
-            self.weights_paths[3]: (self.reset_flag[2], 'reset_step_3', "搭铁线没有复位"),
-            self.weights_paths[4]: (self.reset_flag[3], 'reset_step_4', "当前焊件没有复位")
-        }
+        self.weights_paths[0]: [(self.reset_flag[0], 'reset_step_1'),],
+        self.weights_paths[3]: [(self.reset_flag[1], 'reset_step_2'),
+                                (self.reset_flag[2], 'reset_step_3'),
+                                (self.reset_flag[3], 'reset_step_4'),
+                                (self.reset_flag[4], 'reset_step_5')],
+        self.weights_paths[5]: [(self.reset_flag[5], 'reset_step_6')]
+    }
+
+        # if not self.exam_status.value and weights_path in reset_steps:
+        #     flag, step, message = reset_steps[weights_path]
+        #     if flag and step not in self.reset_imgs:
+        #         logger.info(message)
+        #         self.save_image_reset(self.reset_imgs, r, step)
 
         if not self.exam_status.value and weights_path in reset_steps:
-            flag, step, message = reset_steps[weights_path]
-            if flag and step not in self.reset_imgs:
-                logger.info(message)
-                self.save_image_reset(self.reset_imgs, r, step)
+            for flag, step in reset_steps[weights_path]:
+                if flag and step not in self.reset_imgs:
+                    self.save_image_reset(self.reset_imgs, r, step)
 
 
         exam_steps = {
+            self.weights_paths[0]: [
+            (self.exam_flag[0], 'welding_exam_1'),
+            (self.exam_flag[21], 'welding_exam_22'),
+            ],
             self.weights_paths[1]: [
-            (self.exam_flag[11], 'welding_exam_12'),
-            (self.exam_flag[3], 'welding_exam_4'),
-            (self.exam_flag[10], 'welding_exam_11'),
-            (self.exam_flag[6], 'welding_exam_7')
+            (self.exam_flag[9], 'welding_exam_10'),
+            (self.exam_flag[14], 'welding_exam_15'),
             ],
             self.weights_paths[2]: [
-            (self.exam_flag[0], 'welding_exam_1'),
-            (self.exam_flag[13], 'welding_exam_14')
+            (self.exam_flag[11], 'welding_exam_12'),
+            (self.exam_flag[12], 'welding_exam_13'),
+            (self.exam_flag[13], 'welding_exam_14'),
+            (self.exam_flag[19], 'welding_exam_20'),
+            (self.exam_flag[20], 'welding_exam_21'),
             ],
             self.weights_paths[3]: [
-            (self.exam_flag[1], 'welding_exam_2'),
-            (self.exam_flag[12], 'welding_exam_13')
-            ],
-            self.weights_paths[0]: [
-            (self.exam_flag[4], 'welding_exam_5'),
-            (self.exam_flag[8], 'welding_exam_9')
+
+            (self.exam_flag[6], 'welding_exam_7'),
+            (self.exam_flag[7], 'welding_exam_8'),
+            (self.exam_flag[10], 'welding_exam_11'),
+            (self.exam_flag[16], 'welding_exam_17'),
+            (self.exam_flag[17], 'welding_exam_18'),
+            (self.exam_flag[18], 'welding_exam_19'),
+            (self.exam_flag[22], 'welding_exam_23'),
+            (self.exam_flag[23], 'welding_exam_24'),
             ],
             self.weights_paths[4]: [
-            (self.exam_flag[7], 'welding_exam_8'),
+            (self.exam_flag[1], 'welding_exam_2'),
             (self.exam_flag[2], 'welding_exam_3'),
-            (self.exam_flag[9], 'welding_exam_10'),
-            (self.exam_flag[5], 'welding_exam_6')
+            (self.exam_flag[3], 'welding_exam_4'),
+            (self.exam_flag[4], 'welding_exam_5'),
+            (self.exam_flag[5], 'welding_exam_6'),
+            ],
+            self.weights_paths[5]: [
+            (self.exam_flag[8], 'welding_exam_9'),
+            (self.exam_flag[15], 'welding_exam_16'),
             ]
         }
 
@@ -188,6 +215,7 @@ class ResultProcessor:
             for flag, step in exam_steps[weights_path]:
                 if flag and step not in self.exam_imgs:
                     self.save_image_exam(self.exam_imgs, r, step, self.exam_order)
+                    self.exam_score[step]=10#TODO:计算分数,临时测试
 
     def save_image_reset(self,welding_reset_imgs,r, step_name):#保存图片
         save_time = datetime.now().strftime('%Y%m%d_%H%M')

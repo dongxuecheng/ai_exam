@@ -9,7 +9,7 @@ def setup_logging():
     logger = logging.getLogger("uvicorn")
     
     # Create logs directory if it doesn't exist
-    log_dir = Path("/mnt/xcd/code/ai_exam/logs/welding_k2")
+    log_dir = Path("/home/dxc/ai_exam/logs/welding_k2")
     log_dir.mkdir(exist_ok=True)
     
     # Create timestamp for log filename

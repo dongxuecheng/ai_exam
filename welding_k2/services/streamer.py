@@ -80,7 +80,7 @@ class VideoStreamer:
                 # 将同一帧分发到该流对应的所有模型队列
                 for model_idx in config.target_models:
                     self.frame_queues[model_idx].put_nowait(frame)
-
+            logger.info(f"Stopped stream: {config.rtsp_url}")
 
     @contextmanager
     def _video_capture(self, rtsp_url: str):

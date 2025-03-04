@@ -29,8 +29,9 @@ class DetectionManager:
 
     def start(self):
         self.initialize_managers()
-        self.stream_manager.start_streams()
+        #必须先启动推理，再启动视频流,防止出现队列变满
         self.inference_manager.start_inference()
+        self.stream_manager.start_streams()
         self.is_running = True
 
     def stop(self):
@@ -60,6 +61,8 @@ class DetectionManager:
 
     def get_exam_imgs(self):
         return self.result_processor.exam_imgs
+    def get_exam_score(self):
+        return self.result_processor.exam_score
 
     def init_exam_variables(self):
         self.result_processor.init_exam_variables()
