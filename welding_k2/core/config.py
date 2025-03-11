@@ -30,7 +30,7 @@ STREAM_CONFIGS = [
     ),
     StreamConfig(
         rtsp_url="rtsp://admin:yaoan1234@172.16.22.232/cam/realmonitor?channel=1&subtype=0",
-        target_models={5,6}  # 焊机开关视频流,目标检测（开关），分割（人体）来判断一次线
+        target_models={5}  # 焊机开关视频流,目标检测（开关），分割（人体）来判断一次线
     )
 ]
 
@@ -43,8 +43,7 @@ WELDING_K2_CONFIG= ServerConfig(
         os.path.join(WEIGHTS_BASE_DIR, 'yz_switching_light_view.pt'),
         os.path.join(WEIGHTS_BASE_DIR, 'yz_grounding_wire.pt'),
         os.path.join(WEIGHTS_BASE_DIR, 'welding_desk_cls_1121.pt'),
-        os.path.join(WEIGHTS_BASE_DIR, 'yz_welding_switches.pt'),
-        os.path.join(WEIGHTS_BASE_DIR, 'yolo11x-seg2.pt')
+        os.path.join(WEIGHTS_BASE_DIR, 'yz_welding_switches.pt')
     ],
     images_dir=IMAGES_DIR,
     static_mount_path='/welding_k2',#url中的路径

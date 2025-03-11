@@ -89,7 +89,7 @@ class VideoStreamer:
         try:
             if not cap.isOpened():
                 raise ConnectionError(f"Failed to open stream: {rtsp_url}")
-                    # Enable hardware acceleration
+            # Enable hardware acceleration
             cap.set(cv2.CAP_PROP_HW_ACCELERATION, cv2.VIDEO_ACCELERATION_ANY)
             yield cap
         finally:

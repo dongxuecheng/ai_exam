@@ -78,12 +78,8 @@ class YOLOPredictor:
 
     def _run_inference(self, model, frame, weights_path):
         try:
-            if weights_path==self.weights_paths[1]:
-                results = model.predict(frame,verbose=False,device=0,conf=0.8,classes=[0])[0]
-            else:
-                results = model.predict(frame,verbose=False,device=0,conf=0.6)[0]
+            results = model.predict(frame,verbose=False,device=0,conf=0.6)[0]
             
-
             self.result_processor.main_fun(results, weights_path)
         except Exception as e:
             logger.error(f"Inference failed: {e}")
