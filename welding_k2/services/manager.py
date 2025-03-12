@@ -1,7 +1,7 @@
-from ..schemas import ServerConfig
-from .streamer import VideoStreamer
-from .predictor import YOLOPredictor
+from shared.schemas import ServerConfig
+from shared.services import VideoStreamer, YOLOPredictor
 from .processor import ResultProcessor
+from ..core import logger
 
 
 class DetectionManager:
@@ -18,14 +18,18 @@ class DetectionManager:
                 self.config.weights_paths,
                 self.config.images_dir,
                 self.config.img_url_path)
+                
             self.stream_manager = VideoStreamer(
                 self.config.stream_configs,
-                len(self.config.weights_paths)
+                len(self.config.weights_paths),
+                custom_logger=logger
             )
+            
             self.inference_manager = YOLOPredictor(
                 self.config.weights_paths,
                 self.stream_manager.frame_queues,
-                self.result_processor)
+                self.result_processor,
+                custom_logger=logger)
 
     def start(self):
         self.initialize_managers()

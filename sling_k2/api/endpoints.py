@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from ..services import DetectionManager
 from functools import lru_cache
 from typing import Annotated
-from ..core import BASKET_K2_CONFIG, logger
+from ..core import SLING_K2_CONFIG,logger
 from shared.schemas import StatusResponse, ExamStatusResponse
 import re
 
@@ -10,7 +10,7 @@ router = APIRouter()
 
 @lru_cache()#单例模型
 def get_service() -> DetectionManager:
-    return DetectionManager(BASKET_K2_CONFIG)
+    return DetectionManager(SLING_K2_CONFIG)
 
 #依赖注入
 DetectionManagerDep=Annotated[DetectionManager,Depends(get_service)]
@@ -19,7 +19,7 @@ DetectionManagerDep=Annotated[DetectionManager,Depends(get_service)]
 
 @router.get("/start_detection",response_model=StatusResponse)
 async def start_detection(service: DetectionManagerDep) -> StatusResponse:
-    """Start basket detection service"""
+    """Start sling detection service"""
     try:
         if service.is_running:
             logger.info("Detection already running")
@@ -35,7 +35,7 @@ async def start_detection(service: DetectionManagerDep) -> StatusResponse:
 
 @router.get("/stop_detection",response_model=StatusResponse)
 async def stop_detection(service: DetectionManagerDep) -> StatusResponse:
-    """Stop basket detection service"""
+    """Stop sling detection service"""
     try:
         if not service.is_running:
             logger.info("No detection running")
@@ -52,7 +52,7 @@ async def stop_detection(service: DetectionManagerDep) -> StatusResponse:
 
 @router.get("/start_exam", response_model=StatusResponse)
 async def start_exam(service: DetectionManagerDep) -> StatusResponse:
-    """Start basket examination"""
+    """Start sling examination"""
     try:
         logger.info("Starting exam")
         if not service.get_exam_status():  # 防止重复开启检测服务
@@ -73,11 +73,11 @@ async def exam_status(service: DetectionManagerDep) -> ExamStatusResponse:
     try:
         logger.info("Checking exam status")
         if not service.get_exam_order():#使用not来判断列表是否为空
-            logger.info('basket_exam_order is none')
+            logger.info('sling_exam_order is none')
             return ExamStatusResponse(status="NONE")
         
         exam_steps = [
-            {"step": re.search(r'basket_exam_(\d+)', value).group(1), "image": service.get_exam_imgs().get(value)}
+            {"step": re.search(r'sling_exam_(\d+)', value).group(1), "image": service.get_exam_imgs().get(value), "score": service.get_exam_score().get(value)}
             for value in service.get_exam_order()
         ]
         return ExamStatusResponse(status="SUCCESS", data=exam_steps)
@@ -88,7 +88,7 @@ async def exam_status(service: DetectionManagerDep) -> ExamStatusResponse:
 
 @router.get("/stop_exam",response_model=StatusResponse)
 async def stop_exam(service: DetectionManagerDep) -> StatusResponse:
-    """Stop basket examination"""
+    """Stop sling examination"""
     try:
         logger.info("Stopping exam")
         if service.get_exam_status():

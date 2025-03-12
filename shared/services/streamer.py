@@ -1,26 +1,29 @@
 from multiprocessing import Queue, Event, Process
-from ..schemas import StreamConfig
 import cv2
-from ..core import logger
 from contextlib import contextmanager
+import logging
 
-
+# Use basic logging if specific logger not provided
+logger = logging.getLogger("shared_services")
 
 class VideoStreamer:
-    def __init__(self, stream_configs: list[StreamConfig],num_models: int):
+    def __init__(self, stream_configs: list, num_models: int, custom_logger=None):
         """
-        初始化视频流管理器
-        :param stream_configs: 每个视频流的配置
+        Initialize video stream manager
+        :param stream_configs: Configuration for each video stream
+        :param num_models: Total number of models
+        :param custom_logger: Optional custom logger
         """
         self.stream_configs = stream_configs
-        self.num_models = num_models  # 总模型数量
+        self.num_models = num_models
+        self.logger = custom_logger or logger
         
-        # 为每个模型创建对应的帧队列
+        # Create frame queues for each model
         self.frame_queues = [
             Queue(maxsize=100) for _ in range(self.num_models)
         ]
         
-        # 进程和事件管理
+        # Process and event management
         self.processes: list[Process] = []
         self.start_events = [Event() for _ in range(len(stream_configs))]
         self.stop_events = [Event() for _ in range(len(stream_configs))]
@@ -47,21 +50,17 @@ class VideoStreamer:
             try:
                 process.join(timeout=1)
                 if process.is_alive():
-                    logger.warning(f"Terminating process {process.pid}")
+                    self.logger.warning(f"Terminating process {process.pid}")
                     process.terminate()
             except Exception as e:
-                logger.error(f"Failed to stop inference process {process.pid}: {e}")
+                self.logger.error(f"Failed to stop inference process {process.pid}: {e}")
         
-        #self._reset_queues()
         self.processes.clear()
+        self.logger.info("All streams stopped")
 
-        logger.info("All streams stopped")
-
-    def _fetch_video_stream(self, config: StreamConfig, 
-                          index: int, start_event: Event, 
-                          stop_event: Event):
+    def _fetch_video_stream(self, config, index: int, start_event: Event, stop_event: Event):
         """
-        获取视频流并分发到对应模型的队列
+        Fetch video stream and distribute to model queues
         """
         with self._video_capture(config.rtsp_url) as cap:
             
@@ -75,22 +74,22 @@ class VideoStreamer:
 
                 if not start_event.is_set():
                     start_event.set()
-                    logger.info(f"Started stream: {config.rtsp_url}")
+                    self.logger.info(f"Started stream: {config.rtsp_url}")
 
-                # 将同一帧分发到该流对应的所有模型队列
+                # Distribute frame to all target model queues for this stream
                 for model_idx in config.target_models:
                     self.frame_queues[model_idx].put_nowait(frame)
-            logger.info(f"Stopped stream: {config.rtsp_url}")
+            self.logger.info(f"Stopped stream: {config.rtsp_url}")
 
     @contextmanager
     def _video_capture(self, rtsp_url: str):
-        """视频捕获的上下文管理器"""
+        """Video capture context manager"""
         cap = cv2.VideoCapture(rtsp_url)
         try:
             if not cap.isOpened():
                 raise ConnectionError(f"Failed to open stream: {rtsp_url}")
-                    # Enable hardware acceleration
-            cap.set(cv2.CAP_PROP_HW_ACCELERATION, cv2.VIDEO_ACCELERATION_ANY)
+            # Enable hardware acceleration
+            #cap.set(cv2.CAP_PROP_HW_ACCELERATION, cv2.VIDEO_ACCELERATION_ANY)
             yield cap
         finally:
             cap.release()

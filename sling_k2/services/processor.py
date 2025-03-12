@@ -1,7 +1,7 @@
 from multiprocessing import Array,Manager,Value
 from datetime import datetime
 from ..core import logger
-from shared.utils import is_point_in_rect,is_boxes_intersect,is_point_in_polygon,calculate_rect_polygon_iou
+from shared.utils import is_point_in_rect,is_boxes_intersect
 from shared.services import BaseResultProcessor
 
 class ResultProcessor(BaseResultProcessor):
@@ -13,7 +13,6 @@ class ResultProcessor(BaseResultProcessor):
         self.exam_order = self.manager.list()
         self.exam_status = Value('b', False)
 
-        self.seg_region=self.manager.dict()#用于存储吊篮的分割区域
 
         self.weights_paths = weights_paths
         self.images_dir=images_dir
@@ -75,77 +74,11 @@ class ResultProcessor(BaseResultProcessor):
                         self.warning_zone_flag[0]=True
         
         if weights_path==self.weights_paths[2]:#姿态估计，判断手部是否检查对应物品
-            keypoints = r.keypoints.xy.cpu().numpy()
-            if keypoints.size != 0:
-                for keypoint in keypoints:
-                    left_wrist = list(map(int, keypoint[9]))
-                    right_wrist = list(map(int, keypoint[10]))
+            pass
 
-                    BASKET_STEEL_WIRE_REGION = [
-                        [(374, 846), (601, 970), (630, 900), (441, 786)],  # 右一多边形区域
-                        [(1518, 736), (1649, 945), (2005, 917), (1888, 677)]  # 右二多边形区域
-                    ]#钢丝绳区域，暂时没有钢丝绳的区域
 
-                    BASKET_SAFETY_LOCK_REGION = [
-                        [(1635, 813), (1742, 927), (1955, 910), (1906, 747)],
-                        [(650, 944), (800, 1000), (800, 923), (680, 872)]
-                    ]  # 安全锁区域
 
-                    points = [left_wrist, right_wrist]
-                    if not self.exam_flag[2]:
-                        is_inside1 = any(is_point_in_polygon(point, BASKET_STEEL_WIRE_REGION[0]) for point in points)
-                        is_inside2 = any(is_point_in_polygon(point, BASKET_STEEL_WIRE_REGION[1]) for point in points)
-                        if is_inside1 or is_inside2:
-                            self.exam_flag[2]=True
-
-                    if not self.exam_flag[3] and 'platform' in self.seg_region:
-                        is_inside = any(is_point_in_polygon(point,self.seg_region['platform']) for point in points)
-                        if is_inside:
-                            self.exam_flag[3]=True
-
-                    if not self.exam_flag[4] and 'hoist_l' in self.seg_region and 'hoist_r' in self.seg_region:
-                        is_inside1 = any(is_point_in_polygon(point,self.seg_region['hoist_l']) for point in points)
-                        is_inside2 = any(is_point_in_polygon(point,self.seg_region['hoist_r']) for point in points)   
-                        if is_inside1 or is_inside2:
-                            self.exam_flag[4]=True
-
-                    if not self.exam_flag[5]:
-                        is_inside1 = any(is_point_in_polygon(point, BASKET_SAFETY_LOCK_REGION[0]) for point in points)
-                        is_inside2 = any(is_point_in_polygon(point, BASKET_SAFETY_LOCK_REGION[1]) for point in points)
-                        
-                        if is_inside1 or is_inside2:
-                            self.exam_flag[5]=True
-
-                    if not self.exam_flag[6] and 'electricalSystem' in self.seg_region:
-                        is_inside = any(is_point_in_polygon(point,self.seg_region['electricalSystem']) for point in points)
-                        if is_inside:
-                            self.exam_flag[6]=True
-
-            #暂时没有加检测人的逻辑
-            if 'platform' in self.seg_region and not self.exam_flag[7]:
-                #self.exam_flag[7]=True
-                if calculate_rect_polygon_iou([446,883,765,1163],self.seg_region['platform'])>0.01:
-                    self.exam_flag[7]=True#空载
-
-        if weights_path==self.weights_paths[3]:#分割，实时获取吊篮区域
-            boxes = r.boxes.xyxy.cpu().numpy()
-            classes = r.boxes.cls.cpu().numpy()            
-            if r.masks is not None:
-                masks = r.masks.xy #已经是list数组了
-                for box, cls,mask in zip(boxes, classes,masks):
-                    # 将掩码转换为 list[tuple[int, int]] 格式
-                    mask = [(int(x), int(y)) for x, y in mask]
-                    #logger.info(mask)
-                    if r.names[int(cls)] == "basket":
-                        self.seg_region['basket']=mask
-                    if r.names[int(cls)] == "hoist_l":
-                        self.seg_region['hoist_l']=mask
-                    if r.names[int(cls)] == "hoist_r":
-                        self.seg_region['hoist_r']=mask
-                    if r.names[int(cls)] == "electricalSystem":
-                        self.seg_region['electricalSystem']=mask
-
-        if weights_path==self.weights_paths[4]:
+        if weights_path==self.weights_paths[3]:
             boxes = r.boxes.xyxy.cpu().numpy()
             classes = r.boxes.cls.cpu().numpy()           
             safety_belt_position=None
@@ -167,13 +100,7 @@ class ResultProcessor(BaseResultProcessor):
                 if r.names[int(cls)] == "self_locking":
                     self_locking_position=tuple(map(int, box))
 
-            if not self.warning_zone_flag[0] and not self.warning_zone_flag[1] and self.exam_flag[0] and self.exam_flag[9]:#当检测不到警戒区时,判定未拆除警戒区域
-                self.exam_flag[11]=True
-                self.exam_flag[10]=True
 
-            if safety_belt_position is not None and self_locking_position is not None:
-                if is_boxes_intersect(safety_belt_position,self_locking_position):
-                    self.exam_flag[8]=True
 
         self.save_step(r, weights_path)
     
@@ -181,21 +108,21 @@ class ResultProcessor(BaseResultProcessor):
 
         # Restructure exam_steps to be a dictionary with weights_path as keys
         exam_steps = {
-            self.weights_paths[0]: [(self.exam_flag[1], "basket_step_2")],
+            self.weights_paths[0]: [(self.exam_flag[1], "sling_step_2")],
             self.weights_paths[2]: [
-                (self.exam_flag[2], "basket_step_3"),
-                (self.exam_flag[3], "basket_step_4"),
-                (self.exam_flag[4], "basket_step_5"),
-                (self.exam_flag[5], "basket_step_6"),
-                (self.exam_flag[6], "basket_step_7"),
-                (self.exam_flag[7], "basket_step_8"),
+                (self.exam_flag[2], "sling_step_3"),
+                (self.exam_flag[3], "sling_step_4"),
+                (self.exam_flag[4], "sling_step_5"),
+                (self.exam_flag[5], "sling_step_6"),
+                (self.exam_flag[6], "sling_step_7"),
+                (self.exam_flag[7], "sling_step_8"),
             ],
             self.weights_paths[3]: [
-                (self.exam_flag[0], "basket_step_1"),
-                (self.exam_flag[11], "basket_step_12"),
-                (self.exam_flag[9], "basket_step_10"),
-                (self.exam_flag[10], "basket_step_11"),
-                (self.exam_flag[8], "basket_step_9"),
+                (self.exam_flag[0], "sling_step_1"),
+                (self.exam_flag[11], "sling_step_12"),
+                (self.exam_flag[9], "sling_step_10"),
+                (self.exam_flag[10], "sling_step_11"),
+                (self.exam_flag[8], "sling_step_9"),
             ]
         }
         

@@ -1,4 +1,4 @@
-from ..schemas import StreamConfig, ServerConfig
+from shared.schemas import StreamConfig, ServerConfig
 from pathlib import Path
 import os
 

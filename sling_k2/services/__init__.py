@@ -1,4 +1,4 @@
-"""Service implementations for basket K2 detection service."""
+"""Service implementations for sling K2 detection service."""
 
 from .manager import DetectionManager
 from .processor import ResultProcessor

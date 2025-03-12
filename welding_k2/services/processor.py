@@ -2,8 +2,9 @@ from multiprocessing import Array,Manager,Value
 from datetime import datetime
 from shared.utils import is_boxes_intersect,calculate_mask_rect_iou
 from ..core import logger
+from shared.services import BaseResultProcessor
 
-class ResultProcessor:
+class ResultProcessor(BaseResultProcessor):
     def __init__(self,weights_paths: list[str],images_dir, img_url_path):
         self.reset_flag = Array('b', [False] * 6)
         self.exam_flag = Array('b', [False] * 24)
@@ -29,6 +30,10 @@ class ResultProcessor:
             self.reset_flag[i] = False
         self.reset_imgs.clear()
 
+    def process_result(self, r, weights_path):
+        """Process results from the model - implementation of BaseResultProcessor method"""
+        self.main_fun(r, weights_path)
+        
     def main_fun(self, r, weights_path):
 
         if weights_path==self.weights_paths[0]:#目标检测（油桶和扫把）
@@ -51,6 +56,7 @@ class ResultProcessor:
         elif weights_path==self.weights_paths[1]:#焊机垂直向下的分割，检测焊机二次线的视角
             if r.masks is not None:
                 masks = r.masks.xy #已经是list数组了
+                #Todo: 加上判断分割出的物体是否是人
                 for mask in masks:
                     iou1=calculate_mask_rect_iou(mask, (617, 867, 952, 1311))#一次线
                     iou2=calculate_mask_rect_iou(mask, (976, 862, 1612, 1296))#焊机

@@ -1,18 +1,31 @@
 from multiprocessing import Queue, Event, Process
 from ultralytics import YOLO
-from .processor import ResultProcessor
-from ..core import logger
+import logging
+from .processor import BaseResultProcessor
+
+# Use basic logging if specific logger not provided
+logger = logging.getLogger("shared_services")
+
 
 
 class YOLOPredictor:
-    def __init__(self, weights_paths: list[str], frame_queues: list[Queue],result_processor: ResultProcessor):
+    def __init__(self, weights_paths: list[str], frame_queues: list[Queue], 
+                 result_processor:BaseResultProcessor, custom_logger=None):
+        """
+        Initialize YOLO predictor
+        :param weights_paths: List of model weight paths
+        :param frame_queues: List of frame queues for each model
+        :param result_processor: Processor for model results
+        :param custom_logger: Optional custom logger
+        """
         self.weights_paths = weights_paths
         self.frame_queues = frame_queues
+        self.result_processor = result_processor
+        self.logger = custom_logger or logger
+        
         self.processes: list[Process] = []
         self.start_events = [Event() for _ in range(len(self.weights_paths))]
         self.stop_events = [Event() for _ in range(len(self.weights_paths))]
-        self.result_processor = result_processor
-
 
     def start_inference(self):
         for i, (weights_path, frame_queue) in enumerate(zip(self.weights_paths, self.frame_queues)):
@@ -36,14 +49,11 @@ class YOLOPredictor:
                 process.join(timeout=1)
                 if process.is_alive():
                     process.terminate()
-
             except Exception as e:
-                logger.error(f"Failed to stop inference process {process.pid}: {e}")
+                self.logger.error(f"Failed to stop inference process {process.pid}: {e}")
 
         self.processes.clear()
-        logger.info("All inference processes stopped")
-    
-
+        self.logger.info("All inference processes stopped")
 
     def _inference_worker(self, weights_path: str, frame_queue: Queue,
                          start_event: Event, stop_event: Event):
@@ -51,8 +61,7 @@ class YOLOPredictor:
             model = self._load_model(weights_path)
             if not start_event.is_set():
                 start_event.set()
-                logger.info(f"{weights_path} infer_yolo is running")
-            #logger.info(f"Started inference with model: {weights_path}")
+                self.logger.info(f"{weights_path} inference is running")
 
             while not stop_event.is_set():
                 if frame_queue.empty():
@@ -62,28 +71,23 @@ class YOLOPredictor:
                 self._run_inference(model, frame, weights_path)
 
         except Exception as e:
-            logger.error(f"Inference error for {weights_path}: {e}")
+            self.logger.error(f"Inference error for {weights_path}: {e}")
         finally:
-            logger.info(f"Inference stopped for {weights_path}")
-
-
+            self.logger.info(f"Inference stopped for {weights_path}")
 
     def _load_model(self, weights_path: str):
         try:
             model = YOLO(weights_path)
             return model
         except Exception as e:
-            logger.error(f"Failed to load model {weights_path}: {e}")
+            self.logger.error(f"Failed to load model {weights_path}: {e}")
             raise
 
     def _run_inference(self, model, frame, weights_path):
         try:
-            if weights_path==self.weights_paths[1]:
-                results = model.predict(frame,verbose=False,device=0,conf=0.8,classes=[0])[0]
-            else:
-                results = model.predict(frame,verbose=False,device=0,conf=0.6)[0]
-            
-
-            self.result_processor.main_fun(results, weights_path)
+            # Determine if this is a segmentation model and adjust parameters accordingly
+            # Projects can override this method for custom inference logic
+            results = model.predict(frame, verbose=False, device=0, conf=0.6)[0]
+            self.result_processor.process_result(results, weights_path)
         except Exception as e:
-            logger.error(f"Inference failed: {e}")
+            self.logger.error(f"Inference failed: {e}")
