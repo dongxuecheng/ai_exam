@@ -6,6 +6,8 @@ from shared.services import BaseResultProcessor
 
 class ResultProcessor(BaseResultProcessor):
     def __init__(self,weights_paths: list[str],images_dir, img_url_path):
+        super().__init__(weights_paths,images_dir,img_url_path)
+
         self.reset_flag = Array('b', [False] * 6)
         self.exam_flag = Array('b', [False] * 24)
         self.manager = Manager()
@@ -14,16 +16,13 @@ class ResultProcessor(BaseResultProcessor):
         self.exam_order = self.manager.list()
         self.exam_score = self.manager.dict()#某一步骤考试分数
         self.exam_status = Value('b', False)
-        self.weights_paths = weights_paths
-        self.images_dir=images_dir
-        self.img_url_path=img_url_path
+
     
     def init_exam_variables(self):
         for i in range(len(self.exam_flag)):
             self.exam_flag[i] = False    
         self.exam_imgs.clear()
         self.exam_order[:]=[]
-
 
     def init_reset_variables(self):
         for i in range(len(self.reset_flag)):
@@ -163,13 +162,7 @@ class ResultProcessor(BaseResultProcessor):
         self.save_step(r,weights_path)
     
     def save_step(self,r,weights_path):
-        # reset_steps = {
-        #     self.weights_paths[3]: (self.reset_flag[1], 'reset_step_2', "当前焊枪没有复位"),
-        #     self.weights_paths[0]: (self.reset_flag[0], 'reset_step_1', "当前油桶没有复位"),
-        #     self.weights_paths[2]: (self.reset_flag[4], 'reset_step_5', "当前焊机开关没有复位"),
-        #     self.weights_paths[3]: (self.reset_flag[2], 'reset_step_3', "搭铁线没有复位"),
-        #     self.weights_paths[4]: (self.reset_flag[3], 'reset_step_4', "当前焊件没有复位")
-        # }
+
         reset_steps = {
         self.weights_paths[0]: [(self.reset_flag[0], 'reset_step_1'),],
         self.weights_paths[3]: [(self.reset_flag[1], 'reset_step_2'),
@@ -179,11 +172,6 @@ class ResultProcessor(BaseResultProcessor):
         self.weights_paths[5]: [(self.reset_flag[5], 'reset_step_6')]
     }
 
-        # if not self.exam_status.value and weights_path in reset_steps:
-        #     flag, step, message = reset_steps[weights_path]
-        #     if flag and step not in self.reset_imgs:
-        #         logger.info(message)
-        #         self.save_image_reset(self.reset_imgs, r, step)
 
         if not self.exam_status.value and weights_path in reset_steps:
             for flag, step in reset_steps[weights_path]:

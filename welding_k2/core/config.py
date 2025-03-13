@@ -9,7 +9,7 @@ IMAGES_DIR = BASE_DIR / 'images'/ "welding_k2"
 
 # 确保必要的目录存在
 WEIGHTS_BASE_DIR.mkdir(parents=True, exist_ok=True)
-IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+
 
 STREAM_CONFIGS = [
     StreamConfig(

@@ -1,11 +1,13 @@
-"""Shared services for AI exam projects."""
+"""共享服务模块"""
 
-from .streamer import VideoStreamer
-from .predictor import YOLOPredictor
+from .streamer import BaseVideoStreamer
+from .predictor import BaseYOLOPredictor
 from .processor import BaseResultProcessor
+from .manager import BaseDetectionManager
 
 __all__ = [
-    "VideoStreamer",
-    "YOLOPredictor",
-    "BaseResultProcessor"
+    "BaseVideoStreamer",
+    "BaseYOLOPredictor",
+    "BaseResultProcessor",
+    "BaseDetectionManager"
 ]

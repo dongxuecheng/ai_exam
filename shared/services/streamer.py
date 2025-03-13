@@ -6,7 +6,7 @@ import logging
 # Use basic logging if specific logger not provided
 logger = logging.getLogger("shared_services")
 
-class VideoStreamer:
+class BaseVideoStreamer:
     def __init__(self, stream_configs: list, num_models: int, custom_logger=None):
         """
         Initialize video stream manager

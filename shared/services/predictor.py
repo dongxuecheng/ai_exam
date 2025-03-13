@@ -8,7 +8,7 @@ logger = logging.getLogger("shared_services")
 
 
 
-class YOLOPredictor:
+class BaseYOLOPredictor:
     def __init__(self, weights_paths: list[str], frame_queues: list[Queue], 
                  result_processor:BaseResultProcessor, custom_logger=None):
         """

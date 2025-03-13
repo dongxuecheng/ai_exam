@@ -8,7 +8,7 @@ def create_app() -> FastAPI:
     #settings = Settings()
     app = FastAPI(
         title="Basket K2 API",
-        description="API for welding examination system",
+        description="API for Basket examination system",
         version="1.0.0"
     )
     app.mount(BASKET_K2_CONFIG.static_mount_path, StaticFiles(directory=BASKET_K2_CONFIG.images_dir))

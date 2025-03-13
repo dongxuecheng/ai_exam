@@ -6,6 +6,7 @@ from shared.services import BaseResultProcessor
 
 class ResultProcessor(BaseResultProcessor):
     def __init__(self,weights_paths: list[str],images_dir, img_url_path):
+        super().__init__(weights_paths,images_dir, img_url_path)
         self.exam_flag = Array('b', [False] * 12)
         self.warning_zone_flag=Array('b', [False] * 2)#存储两个视角下的警戒区域的检测结果
         self.manager = Manager()
@@ -15,9 +16,6 @@ class ResultProcessor(BaseResultProcessor):
 
         self.seg_region=self.manager.dict()#用于存储吊篮的分割区域
 
-        self.weights_paths = weights_paths
-        self.images_dir=images_dir
-        self.img_url_path=img_url_path
     
     def init_exam_variables(self):
         for i in range(len(self.exam_flag)):
