@@ -98,7 +98,7 @@ async def exam_status(service: DetectionManagerDep) -> ExamStatusResponse:
             return ExamStatusResponse(status="NONE")
         
         exam_steps = [
-            {"step": re.search(r'welding_exam_(\d+)', value).group(1), "image": service.get_exam_imgs().get(value)}
+            {"step": re.search(r'welding_exam_(\d+)', value).group(1), "image": service.get_exam_imgs().get(value),"score":service.get_exam_score().get(value)}
             for value in service.get_exam_order()
         ]
         return ExamStatusResponse(status="SUCCESS", data=exam_steps)

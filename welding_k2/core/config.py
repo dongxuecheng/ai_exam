@@ -41,7 +41,7 @@ WELDING_K2_CONFIG= ServerConfig(
         os.path.join(WEIGHTS_BASE_DIR, 'yz_oil_tank.pt'),
         os.path.join(WEIGHTS_BASE_DIR, 'yolo11x-seg1.pt'),
         os.path.join(WEIGHTS_BASE_DIR, 'yz_switching_light_view.pt'),
-        os.path.join(WEIGHTS_BASE_DIR, 'yz_grounding_wire.pt'),
+        os.path.join(WEIGHTS_BASE_DIR, 'yz_welding_station.pt'),
         os.path.join(WEIGHTS_BASE_DIR, 'welding_desk_cls_1121.pt'),
         os.path.join(WEIGHTS_BASE_DIR, 'yz_welding_switches.pt')
     ],

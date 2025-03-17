@@ -14,8 +14,6 @@ class ResultProcessor(BaseResultProcessor):
         self.exam_order = self.manager.list()
         self.exam_status = Value('b', False)
 
-
-
     
     def init_exam_variables(self):
         for i in range(len(self.exam_flag)):
