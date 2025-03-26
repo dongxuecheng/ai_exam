@@ -87,7 +87,7 @@ class BaseYOLOPredictor:
         try:
             # Determine if this is a segmentation model and adjust parameters accordingly
             # Projects can override this method for custom inference logic
-            if 'yolo11x-seg' in weights_path.lower():
+            if 'yolo11l-seg' in weights_path.lower():
                 results = model.predict(frame, verbose=False, conf=0.6,classes=[0])[0]
                     # Additional parameters for segmentation models if needed
             else:

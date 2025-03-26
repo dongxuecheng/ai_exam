@@ -7,12 +7,12 @@ from shared.services import BaseResultProcessor
 class ResultProcessor(BaseResultProcessor):
     SAFE_AREA = [(1012,0),(996,382),(1764,396),(1905,0)]#油桶和扫把安全区域
 
-    FIRST_LINE_AREA = (617, 867, 952, 1311)#一次线区域
-    WELDING_MACHINE_AREA = (976, 862, 1612, 1296)#焊机区域
-    GUN_SECONDARY_LINE_AREA = (1638, 1017, 1932, 1085)#焊枪二次线区域
-    GROUND_SECONDARY_LINE_AREA = (1624, 1177, 1921, 1257)#接地夹二次线区域
+    FIRST_LINE_AREA = (644, 879, 926, 1245)#一次线区域
+    WELDING_MACHINE_AREA = (936, 880, 1546, 1279)#焊机区域
+    GUN_SECONDARY_LINE_AREA = (1578, 1028, 1866, 1116)#焊枪二次线区域
+    GROUND_SECONDARY_LINE_AREA = (1574, 1196, 1841, 1264)#接地夹二次线区域
 
-    GUN_GROUND_DEFAULT_AREA = (645, 494, 1069, 919)#焊枪接地夹默认区域
+    GUN_GROUND_DEFAULT_AREA = (649, 476, 1107, 918)#焊枪接地夹默认区域
 
     GROUNDING_WIRE_AREA = (623, 252, 2026, 1379)#焊台上的搭铁线
     WELDING_PIECE_AREA = (966, 700, 1558, 1101)#焊台上的焊件区域
@@ -20,7 +20,7 @@ class ResultProcessor(BaseResultProcessor):
     def __init__(self,weights_paths: list[str],images_dir, img_url_path):
         super().__init__(weights_paths,images_dir,img_url_path)
 
-        self.reset_flag = Array('b', [False] * 6)
+        self.reset_flag = Array('b', [True] * 6)
         self.exam_flag = Array('b', [False] * 24)
         self.manager = Manager()
         self.reset_imgs = self.manager.dict()
@@ -38,7 +38,7 @@ class ResultProcessor(BaseResultProcessor):
 
     def init_reset_variables(self):
         for i in range(len(self.reset_flag)):
-            self.reset_flag[i] = False
+            self.reset_flag[i] = True
         self.reset_imgs.clear()
 
     def process_result(self, r, weights_path):
@@ -56,7 +56,7 @@ class ResultProcessor(BaseResultProcessor):
                     box=list(map(int, box))#转换为int类型
                     center_point = ((box[0]+box[2])//2,(box[1]+box[3])//2)
                     if is_point_in_polygon(center_point, self.SAFE_AREA):
-                        self.reset_flag[0] = True#表面油桶不在危险区域，所以需要复位
+                        #self.reset_flag[0] = True#表面油桶不在危险区域，所以需要复位
                         self.exam_flag[0]=True#油桶已经排除在危险区域外
                     else:
                         self.reset_flag[0] = False#表面油桶在危险区域，所以不需要复位
@@ -95,47 +95,62 @@ class ResultProcessor(BaseResultProcessor):
             boxes = r.boxes.xyxy.cpu().numpy()
             classes = r.boxes.cls.cpu().numpy()
             
-            self.reset_flag[2] = True
-            self.reset_flag[1] = True
+            #self.reset_flag[2] = True
+            #self.reset_flag[1] = True
 
             for box, cls in zip(boxes, classes):
+                #logger.info(r.names[int(cls)] )
+
                 if r.names[int(cls)] == "welding_gun":
-                    if is_boxes_intersect(tuple(map(int, box)), self.GUN_SECONDARY_LINE_AREA):#(x1,y1,x2,y2)
+                    #logger.info('焊枪')
+                    #logger.info(self.GUN_SECONDARY_LINE_AREA)
+                    if is_boxes_intersect(tuple(map(int, box)), self.GUN_GROUND_DEFAULT_AREA):#(x1,y1,x2,y2)
                         self.reset_flag[1] = False #焊枪在指定区域，不需要复位
-                        if self.exam_flag[13]:#完成焊接作业
+                        #logger.info('焊枪不需要复位')
+                        if self.exam_flag[20]:#完成焊接作业
                             self.exam_flag[22]=True
                     else:
                         self.exam_flag[22]=False 
 
-                elif r.names[int(cls)] == "grounding_wire":
-                    if is_boxes_intersect(tuple(map(int, box)), self.GUN_SECONDARY_LINE_AREA):
+                elif r.names[int(cls)] == "grounding_wire ":#TODO 多了个空格
+                    #logger.info('搭铁线')
+                    if is_boxes_intersect(tuple(map(int, box)), self.GUN_GROUND_DEFAULT_AREA):
                         self.reset_flag[2] = False
-                        if self.exam_flag[13]:
+                        #logger.info('搭铁线没有复位')
+                        if self.exam_flag[20]:
                             self.exam_flag[23]=True
                     else:
                         self.exam_flag[23]=False
 
                 elif r.names[int(cls)] == "red_light_on":#红灯亮,打开总开关
-                    self.reset_flag[3]=True
+                    #self.reset_flag[3]=True
                     self.exam_flag[6]=True
-                    self.exam_flag[10]=True
+
+
 
                 elif r.names[int(cls)] == "green_light_on":#绿灯亮，打开漏电保护开关
-                    self.reset_flag[4]=True
+                    #self.reset_flag[4]=True
                     self.exam_flag[7]=True
 
                 elif r.names[int(cls)] == "red_light_off":#红灯灭，关闭总开关
+                    self.reset_flag[3]=False
                     if self.exam_flag[6]:
                         self.exam_flag[17]=True
                         self.exam_flag[18]=True
 
                 elif r.names[int(cls)] == "green_light_off":#绿灯灭，关闭漏电保护开关
+                    self.reset_flag[4]=False
                     if self.exam_flag[7]:
                         self.exam_flag[16]=True
+            
+            if self.exam_flag[6] and self.exam_flag[7] and self.exam_flag[8] and self.exam_flag[9]:
+                self.exam_flag[10]=True
 
         if weights_path==self.weights_paths[3]:#目标检测（焊台上的搭铁线，焊件，刷子，铁锤）
             boxes = r.boxes.xyxy.cpu().numpy()
             classes = r.boxes.cls.cpu().numpy()
+            brush_flag=False
+            hammer_flag=False
             for box, cls in zip(boxes, classes):
                 if r.names[int(cls)] == "grounding_wire":#接地夹
                     if is_boxes_intersect(tuple(map(int, box)), self.GROUNDING_WIRE_AREA):
@@ -144,22 +159,29 @@ class ResultProcessor(BaseResultProcessor):
 
                 elif r.names[int(cls)] == "welding_piece":#焊件
                     if is_boxes_intersect(tuple(map(int, box)), self.WELDING_PIECE_AREA):
-                        self.exam_flag[11]=False
+                        self.exam_flag[11]=True
                 
                 elif r.names[int(cls)] == "brush":#刷子
+                    brush_flag=True
                     if self.exam_flag[13]:
                         if is_boxes_intersect(tuple(map(int, box)), self.GROUNDING_WIRE_AREA):
                             self.exam_flag[19]=True
                 elif r.names[int(cls)] == "hammer":#铁锤
+                    hammer_flag=True
                     if self.exam_flag[13]:
                         if is_boxes_intersect(tuple(map(int, box)), self.GROUNDING_WIRE_AREA):
                             self.exam_flag[19]=True
+
+            if not brush_flag and not hammer_flag and self.exam_flag[19]:
+                self.exam_flag[20]=True#TODO 检查考件，临时处理
+
 
         elif weights_path==self.weights_paths[4]:#分类，焊台
             label=r.names[r.probs.top1]
             if label=="welding":
                 self.exam_flag[12]=True
                 self.exam_flag[13]=True
+                self.exam_flag[14]=True#TODO 取下接地夹 临时操作
 
             
         elif weights_path==self.weights_paths[5]:# 焊机开关
@@ -167,9 +189,10 @@ class ResultProcessor(BaseResultProcessor):
             classes = r.boxes.cls.cpu().numpy()
             for cls in classes:
                 if r.names[int(cls)] == "open":
-                    self.reset_flag[5] = True
+                    #self.reset_flag[5] = True
                     self.exam_flag[8]=True
                 elif r.names[int(cls)] == "close":
+                    self.reset_flag[5] = False
                     if self.exam_flag[8]:
                         self.exam_flag[15]=True           
 
@@ -237,8 +260,8 @@ class ResultProcessor(BaseResultProcessor):
             for flag, step in exam_steps[weights_path]:
                 if flag and step not in self.exam_imgs:
                     self.save_image_exam(self.exam_imgs, r, step, self.exam_order)
-                    self.exam_score[step]=85#TODO:计算分数,临时测试
-
+                    self.exam_score[step]=8#TODO:计算分数,临时测试,10分值
+                     
     def save_image_reset(self,welding_reset_imgs,r, step_name):#保存图片
         save_time = datetime.now().strftime('%Y%m%d_%H%M')
         imgpath = f"{self.images_dir}/{step_name}_{save_time}.jpg"

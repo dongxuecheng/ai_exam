@@ -5,6 +5,7 @@ from typing import Annotated
 from ..core import WELDING_K2_CONFIG, logger
 from shared.schemas import StatusResponse, ResetStatusResponse, ExamStatusResponse
 import re
+import asyncio
 
 router = APIRouter()
 
@@ -26,7 +27,9 @@ async def start_detection(service: DetectionManagerDep) -> StatusResponse:
             return StatusResponse(status="ALREADY_RUNNING")
         
         logger.info("Starting detection service")
+        #await asyncio.get_event_loop().run_in_executor(None,service.start)  # Start the detection service in a separate thread
         service.start()
+        #service.init_reset_variables()#开始考试后，需要先初始化复位变量
         return StatusResponse(status="SUCCESS")
     except Exception as e:
         logger.error(f"Detection start failed: {e}")
@@ -53,17 +56,20 @@ async def reset_status(service: DetectionManagerDep) -> ResetStatusResponse:
     """Reset system status"""
     try:
         logger.info("Reset status")
-
+        #TODO ERROR:    Reset failed: 'NoneType' object is not iterable
         #TODO 这里需要加not
-        if not any(service.get_rest_flag()):  # 表明不需要复位,如果 welding_reset_flag 列表中的所有元素都为 False，则 any(welding_reset_flag) 返回 False，not any(welding_reset_flag) 返回 True。
+        reset_flags = service.get_reset_flag()  # 获取复位标志
+        #logger.info(f"reset_flags: {reset_flags}")
+        if not any(reset_flags):  # 表明不需要复位,如果 welding_reset_flag 列表中的所有元素都为 False，则 any(welding_reset_flag) 返回 False，not any(welding_reset_flag) 返回 True。
             logger.info('reset_all!')
             return ResetStatusResponse(status="RESET_ALL")
         
         logger.info('reset_all is false')
         reset_steps = [
             {"resetStep": re.search(r'reset_step_(\d+)', key).group(1), "image": value}
-            for key, value in service.get_rest_imgs().items()
+            for key, value in service.get_reset_imgs().items()
         ]
+        #logger.info(reset_steps)
         service.init_reset_variables()#初始化复位变量
         return ResetStatusResponse(status="NOT_RESET_ALL", data=reset_steps)
         #return {"status": "SUCCESS"}

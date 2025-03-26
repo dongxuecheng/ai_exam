@@ -48,7 +48,7 @@ class BaseVideoStreamer:
             
         for process in self.processes:
             try:
-                process.join(timeout=1)
+                process.join(timeout=3)
                 if process.is_alive():
                     self.logger.warning(f"Terminating process {process.pid}")
                     process.terminate()

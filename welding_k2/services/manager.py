@@ -28,13 +28,14 @@ class DetectionManager(BaseDetectionManager):
             return self.result_processor.exam_score
         return None
 
-    def get_rest_flag(self):
+    def get_reset_flag(self):
         """获取重置标志"""
+        #return self.result_processor.reset_flag
         if self.result_processor and hasattr(self.result_processor, 'reset_flag'):
             return self.result_processor.reset_flag
-        return None
+        return []
 
-    def get_rest_imgs(self):
+    def get_reset_imgs(self):
         """获取重置图像"""
         if self.result_processor and hasattr(self.result_processor, 'reset_imgs'):
             return self.result_processor.reset_imgs
