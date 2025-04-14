@@ -58,7 +58,7 @@ STREAM_CONFIGS = [
 ]
 
 WELDING_K2_CONFIG= ServerConfig(
-    server_ip='172.16.22.55',
+    server_ip='127.0.0.1',
     server_port=5002,
     weights_paths=[
         os.path.join(WEIGHTS_BASE_DIR, 'yz_oil_tank.pt'),
@@ -70,6 +70,6 @@ WELDING_K2_CONFIG= ServerConfig(
     ],
     images_dir=IMAGES_DIR,
     static_mount_path='/welding_k2',#url中的路径
-    img_url_path=f'http://172.16.22.55:5002/welding_k2',
+    img_url_path=f'http://127.0.0.1:5002/welding_k2',
     stream_configs=STREAM_CONFIGS
 )

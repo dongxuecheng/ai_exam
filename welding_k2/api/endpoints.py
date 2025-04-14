@@ -5,7 +5,7 @@ from typing import Annotated
 from ..core import WELDING_K2_CONFIG, logger
 from shared.schemas import StatusResponse, ResetStatusResponse, ExamStatusResponse
 import re
-import asyncio
+
 
 router = APIRouter()
 
@@ -27,9 +27,7 @@ async def start_detection(service: DetectionManagerDep) -> StatusResponse:
             return StatusResponse(status="ALREADY_RUNNING")
         
         logger.info("Starting detection service")
-        #await asyncio.get_event_loop().run_in_executor(None,service.start)  # Start the detection service in a separate thread
         service.start()
-        #service.init_reset_variables()#开始考试后，需要先初始化复位变量
         return StatusResponse(status="SUCCESS")
     except Exception as e:
         logger.error(f"Detection start failed: {e}")
@@ -120,7 +118,7 @@ async def stop_exam(service: DetectionManagerDep) -> StatusResponse:
         logger.info("Stopping exam")
         if service.get_exam_status():
             service.set_exam_status(False)
-            #service.reset_exam_variables()
+            service.init_reset_variables()
             return StatusResponse(status="SUCCESS")
         
         logger.info("No exam running")
