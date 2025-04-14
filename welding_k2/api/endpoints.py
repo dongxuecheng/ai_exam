@@ -17,7 +17,6 @@ def get_service() -> DetectionManager:
 DetectionManagerDep=Annotated[DetectionManager,Depends(get_service)]
 
 
-
 @router.get("/start_detection",response_model=StatusResponse)
 async def start_detection(service: DetectionManagerDep) -> StatusResponse:
     """Start welding detection service"""

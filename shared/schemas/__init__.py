@@ -7,7 +7,8 @@ from .response import (
     ExamStepResponse,
     ExamStatusResponse,
     ResetStepResponse,
-    ResetStatusResponse
+    ResetStatusResponse,
+    WearingStatusResponse,
 )
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "ExamStepResponse",
     "ExamStatusResponse",
     "ResetStepResponse",
-    "ResetStatusResponse"
+    "ResetStatusResponse",
+    "WearingStatusResponse"
 ]

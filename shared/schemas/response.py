@@ -16,6 +16,11 @@ class ExamStepResponse(BaseModel):
     image: str
     score: Optional[int] = None
 
+class WearingResponse(BaseModel):
+    """穿戴响应模型"""
+    name: str
+    number: int
+
 class ResetStatusResponse(StatusResponse):
     """复位状态响应模型"""
     data: Optional[list[ResetStepResponse]] = None
@@ -23,3 +28,8 @@ class ResetStatusResponse(StatusResponse):
 class ExamStatusResponse(StatusResponse):
     """考试状态响应模型"""
     data: Optional[list[ExamStepResponse]] = None
+
+class WearingStatusResponse(StatusResponse):
+    """考试状态响应模型"""
+    data: list[WearingResponse]
+    image: str

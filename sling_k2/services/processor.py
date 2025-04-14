@@ -128,6 +128,7 @@ class ResultProcessor(BaseResultProcessor):
                 if flag and step not in self.exam_imgs:
                     self.save_image_exam(self.exam_imgs, r, step, self.exam_order)
 
+    #TODO 还需要修改
     def save_image_exam(self,welding_exam_imgs,r, step_name,welding_exam_order):
         save_time = datetime.now().strftime('%Y%m%d_%H%M')
         imgpath = f"{self.images_dir}/{step_name}_{save_time}.jpg"
