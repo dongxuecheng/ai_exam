@@ -1,7 +1,7 @@
-from multiprocessing import Array,Manager,Value
+from multiprocessing import Manager,Value
 from datetime import datetime
 from ..core import logger
-from shared.utils import is_point_in_rect,is_boxes_intersect
+from shared.utils import is_boxes_intersect
 from shared.services import BaseResultProcessor
 
 class ResultProcessor(BaseResultProcessor):

@@ -1,10 +1,43 @@
 from multiprocessing import Array,Manager,Value
 from datetime import datetime
 from ..core import logger
-from shared.utils import is_point_in_rect,is_boxes_intersect,is_point_in_polygon,calculate_rect_polygon_iou
+from shared.utils import is_point_in_rect,is_boxes_intersect,is_point_in_polygon
 from shared.services import BaseResultProcessor
 
 class ResultProcessor(BaseResultProcessor):
+    STEEL_WIRE_REGION = [
+        [(374, 846), (601, 970), (630, 900), (441, 786)],  # 右一多边形区域
+        [(1518, 736), (1649, 945), (2005, 917), (1888, 677)]  # 右二多边形区域
+    ]#钢丝绳区域，暂时没有钢丝绳的区域
+
+    SAFETY_LOCK_REGION = [
+        [(1635, 813), (1742, 927), (1955, 910), (1906, 747)],
+        [(650, 944), (800, 1000), (800, 923), (680, 872)]
+    ]  # 安全锁区域
+
+    PLATFORM_REGION = [
+        (446, 883), (765, 1163), (1080, 1130), (1080, 883)
+    ] # 吊篮作业平台
+
+    HOIST_REGION = [
+        [(0, 0), (0, 1080), (400, 1080), (400, 0)],
+        [(1520, 0), (1920, 0), (1920, 1080), (1520, 1080)]
+    ] #左边和右边的提升机
+
+    SYSTEM_REGION = [
+        (0, 0), (0, 1080), (400, 1080), (400, 0)
+    ]
+
+    BASKET_HOIST_HIGH_REGION=(0, 0, 400, 1080)#提升机的空载区域
+
+    # 定义悬挂区域的四个方形区域
+    SUSPENSION_REGIONS = [
+        (0, 0, 400, 400),       # 左上区域 (x1, y1, x2, y2)
+        (0, 680, 400, 1080),    # 左下区域
+        (1520, 0, 1920, 400),   # 右上区域
+        (1520, 680, 1920, 1080) # 右下区域
+    ]
+
     def __init__(self,weights_paths: list[str],images_dir, img_url_path):
         super().__init__(weights_paths,images_dir, img_url_path)
         self.exam_flag = Array('b', [False] * 12)
@@ -35,27 +68,19 @@ class ResultProcessor(BaseResultProcessor):
                     try:
                         left_wrist = list(map(int, keypoint[9]))
                         right_wrist = list(map(int, keypoint[10]))
-                        
-                        # 定义悬挂区域的四个方形区域
-                        SUSPENSION_REGIONS = [
-                            (0, 0, 400, 400),       # 左上区域 (x1, y1, x2, y2)
-                            (0, 680, 400, 1080),    # 左下区域
-                            (1520, 0, 1920, 400),   # 右上区域
-                            (1520, 680, 1920, 1080) # 右下区域
-                        ]
-                        
+
                         # 检查左右手腕是否在任意悬挂区域内
-                        for region in SUSPENSION_REGIONS:
+                        for region in self.SUSPENSION_REGIONS:
                             # 检查左手腕
                             if is_point_in_rect(left_wrist, region):
                                 self.exam_flag[1] = True
-                                logger.info(f"左手腕 {left_wrist} 在悬挂区域 {region} 中")
+                                #logger.info(f"左手腕 {left_wrist} 在悬挂区域 {region} 中")
                                 break
                                 
                             # 检查右手腕
                             if is_point_in_rect(right_wrist, region):
                                 self.exam_flag[1] = True
-                                logger.info(f"右手腕 {right_wrist} 在悬挂区域 {region} 中")
+                                #logger.info(f"右手腕 {right_wrist} 在悬挂区域 {region} 中")
                                 break
                                 
                     except (IndexError, ValueError) as e:
@@ -79,76 +104,69 @@ class ResultProcessor(BaseResultProcessor):
                     left_wrist = list(map(int, keypoint[9]))
                     right_wrist = list(map(int, keypoint[10]))
 
-                    BASKET_STEEL_WIRE_REGION = [
-                        [(374, 846), (601, 970), (630, 900), (441, 786)],  # 右一多边形区域
-                        [(1518, 736), (1649, 945), (2005, 917), (1888, 677)]  # 右二多边形区域
-                    ]#钢丝绳区域，暂时没有钢丝绳的区域
-
-                    BASKET_SAFETY_LOCK_REGION = [
-                        [(1635, 813), (1742, 927), (1955, 910), (1906, 747)],
-                        [(650, 944), (800, 1000), (800, 923), (680, 872)]
-                    ]  # 安全锁区域
 
                     points = [left_wrist, right_wrist]
                     if not self.exam_flag[2]:
-                        is_inside1 = any(is_point_in_polygon(point, BASKET_STEEL_WIRE_REGION[0]) for point in points)
-                        is_inside2 = any(is_point_in_polygon(point, BASKET_STEEL_WIRE_REGION[1]) for point in points)
+                        is_inside1 = any(is_point_in_polygon(point, self.STEEL_WIRE_REGION[0]) for point in points)
+                        is_inside2 = any(is_point_in_polygon(point, self.STEEL_WIRE_REGION[1]) for point in points)
                         if is_inside1 or is_inside2:
                             self.exam_flag[2]=True
 
-                    if not self.exam_flag[3] and 'platform' in self.seg_region:
-                        is_inside = any(is_point_in_polygon(point,self.seg_region['platform']) for point in points)
+                    if not self.exam_flag[3]:
+                        is_inside = any(is_point_in_polygon(point,self.PLATFORM_REGION) for point in points)
                         if is_inside:
                             self.exam_flag[3]=True
 
-                    if not self.exam_flag[4] and 'hoist_l' in self.seg_region and 'hoist_r' in self.seg_region:
-                        is_inside1 = any(is_point_in_polygon(point,self.seg_region['hoist_l']) for point in points)
-                        is_inside2 = any(is_point_in_polygon(point,self.seg_region['hoist_r']) for point in points)   
+                    if not self.exam_flag[4]:
+                        is_inside1 = any(is_point_in_polygon(point,self.HOIST_REGION[0]) for point in points)
+                        is_inside2 = any(is_point_in_polygon(point,self.HOIST_REGION[1]) for point in points)   
                         if is_inside1 or is_inside2:
                             self.exam_flag[4]=True
 
                     if not self.exam_flag[5]:
-                        is_inside1 = any(is_point_in_polygon(point, BASKET_SAFETY_LOCK_REGION[0]) for point in points)
-                        is_inside2 = any(is_point_in_polygon(point, BASKET_SAFETY_LOCK_REGION[1]) for point in points)
+                        is_inside1 = any(is_point_in_polygon(point, self.SAFETY_LOCK_REGION[0]) for point in points)
+                        is_inside2 = any(is_point_in_polygon(point, self.SAFETY_LOCK_REGION[1]) for point in points)
                         
                         if is_inside1 or is_inside2:
                             self.exam_flag[5]=True
 
-                    if not self.exam_flag[6] and 'electricalSystem' in self.seg_region:
-                        is_inside = any(is_point_in_polygon(point,self.seg_region['electricalSystem']) for point in points)
+                    if not self.exam_flag[6]:
+                        is_inside = any(is_point_in_polygon(point,self.SYSTEM_REGION) for point in points)
                         if is_inside:
                             self.exam_flag[6]=True
 
             #暂时没有加检测人的逻辑
-            if 'platform' in self.seg_region and not self.exam_flag[7]:
-                #self.exam_flag[7]=True
-                if calculate_rect_polygon_iou([446,883,765,1163],self.seg_region['platform'])>0.01:
-                    self.exam_flag[7]=True#空载
+            # if 'platform' in self.seg_region and not self.exam_flag[7]:
+            #     #self.exam_flag[7]=True
+            #     if calculate_rect_polygon_iou([446,883,765,1163],self.seg_region['platform'])>0.01:
+            #         self.exam_flag[7]=True#空载
 
-        if weights_path==self.weights_paths[3]:#分割，实时获取吊篮区域
-            boxes = r.boxes.xyxy.cpu().numpy()
-            classes = r.boxes.cls.cpu().numpy()            
-            if r.masks is not None:
-                masks = r.masks.xy #已经是list数组了
-                for box, cls,mask in zip(boxes, classes,masks):
-                    # 将掩码转换为 list[tuple[int, int]] 格式
-                    mask = [(int(x), int(y)) for x, y in mask]
-                    #logger.info(mask)
-                    if r.names[int(cls)] == "basket":
-                        self.seg_region['basket']=mask
-                    if r.names[int(cls)] == "hoist_l":
-                        self.seg_region['hoist_l']=mask
-                    if r.names[int(cls)] == "hoist_r":
-                        self.seg_region['hoist_r']=mask
-                    if r.names[int(cls)] == "electricalSystem":
-                        self.seg_region['electricalSystem']=mask
+        # if weights_path==self.weights_paths[3]:#分割，实时获取吊篮区域
+        #     boxes = r.boxes.xyxy.cpu().numpy()
+        #     classes = r.boxes.cls.cpu().numpy()            
+        #     if r.masks is not None:
+        #         masks = r.masks.xy #已经是list数组了
+        #         for box, cls,mask in zip(boxes, classes,masks):
+        #             # 将掩码转换为 list[tuple[int, int]] 格式
+        #             mask = [(int(x), int(y)) for x, y in mask]
+        #             #logger.info(mask)
+        #             if r.names[int(cls)] == "basket":
+        #                 self.seg_region['basket']=mask
+        #             if r.names[int(cls)] == "hoist_l":
+        #                 self.seg_region['hoist_l']=mask
+        #             if r.names[int(cls)] == "hoist_r":
+        #                 self.seg_region['hoist_r']=mask
+        #             if r.names[int(cls)] == "electricalSystem":
+        #                 self.seg_region['electricalSystem']=mask
 
-        if weights_path==self.weights_paths[4]:
+        if weights_path==self.weights_paths[3]:
             boxes = r.boxes.xyxy.cpu().numpy()
             classes = r.boxes.cls.cpu().numpy()           
             safety_belt_position=None
             self_locking_position=None
+            hoist_position=[]
             self.warning_zone_flag[1]=False
+            
             for box, cls in zip(boxes, classes):
                 if r.names[int(cls)] == "brush":
                     if is_boxes_intersect(tuple(map(int, box)), (0, 0, 1920, 1080)):
@@ -164,10 +182,19 @@ class ResultProcessor(BaseResultProcessor):
 
                 if r.names[int(cls)] == "self_locking":
                     self_locking_position=tuple(map(int, box))
+                
+                if r.names[int(cls)] == "hoist":
+                    hoist_position.append(tuple(map(int, box)))
+            
+            # 使用提升机来判断空载
+            if len(hoist_position)>0:
+                for box in hoist_position:
+                    if is_boxes_intersect(tuple(map(int, box)), self.BASKET_HOIST_HIGH_REGION):
+                        self.exam_flag[7]=True
 
             if not self.warning_zone_flag[0] and not self.warning_zone_flag[1] and self.exam_flag[0] and self.exam_flag[9]:#当检测不到警戒区时,判定未拆除警戒区域
-                self.exam_flag[11]=True
                 self.exam_flag[10]=True
+                self.exam_flag[11]=True
 
             if safety_belt_position is not None and self_locking_position is not None:
                 if is_boxes_intersect(safety_belt_position,self_locking_position):

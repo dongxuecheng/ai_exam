@@ -1,10 +1,21 @@
 from multiprocessing import Array,Manager,Value
 from datetime import datetime
 from ..core import logger
-from shared.utils import is_point_in_rect,is_boxes_intersect
+from shared.utils import is_point_in_rect,is_boxes_intersect,is_point_in_polygon
 from shared.services import BaseResultProcessor
 
 class ResultProcessor(BaseResultProcessor):
+    ANCHOR_POINT_REGION = [
+        (0, 0, 1920, 1080)
+    ]
+    WORKING_ROPE_REGION = [
+        (0, 0, 1920, 1080)
+    ]
+    SAFETY_ROPE_REGION = [
+        (0, 0, 1920, 1080)
+    ]
+
+
     def __init__(self,weights_paths: list[str],images_dir, img_url_path):
         super().__init__(weights_paths, images_dir, img_url_path)
         self.exam_flag = Array('b', [False] * 12)
@@ -30,35 +41,17 @@ class ResultProcessor(BaseResultProcessor):
             keypoints = r.keypoints.xy.cpu().numpy()
             if keypoints.size != 0:
                 for keypoint in keypoints:
-                    try:
-                        left_wrist = list(map(int, keypoint[9]))
-                        right_wrist = list(map(int, keypoint[10]))
-                        
-                        # 定义悬挂区域的四个方形区域
-                        SUSPENSION_REGIONS = [
-                            (0, 0, 400, 400),       # 左上区域 (x1, y1, x2, y2)
-                            (0, 680, 400, 1080),    # 左下区域
-                            (1520, 0, 1920, 400),   # 右上区域
-                            (1520, 680, 1920, 1080) # 右下区域
-                        ]
-                        
-                        # 检查左右手腕是否在任意悬挂区域内
-                        for region in SUSPENSION_REGIONS:
-                            # 检查左手腕
-                            if is_point_in_rect(left_wrist, region):
-                                self.exam_flag[1] = True
-                                logger.info(f"左手腕 {left_wrist} 在悬挂区域 {region} 中")
-                                break
-                                
-                            # 检查右手腕
-                            if is_point_in_rect(right_wrist, region):
-                                self.exam_flag[1] = True
-                                logger.info(f"右手腕 {right_wrist} 在悬挂区域 {region} 中")
-                                break
-                                
-                    except (IndexError, ValueError) as e:
-                        logger.error(f"处理关键点时出错: {e}")
-                        continue
+                    left_wrist = list(map(int, keypoint[9]))
+                    right_wrist = list(map(int, keypoint[10]))
+
+
+                    points = [left_wrist, right_wrist]
+
+
+                    if not self.exam_flag[1]:
+                        is_inside = any(is_point_in_polygon(point,self.ANCHOR_POINT_REGION) for point in points)
+                        if is_inside:
+                            self.exam_flag[1]=True
                     
         if weights_path==self.weights_paths[1]:#目标检测(警戒区)
             boxes = r.boxes.xyxy.cpu().numpy()
@@ -71,7 +64,25 @@ class ResultProcessor(BaseResultProcessor):
                         self.warning_zone_flag[0]=True
         
         if weights_path==self.weights_paths[2]:#姿态估计，判断手部是否检查对应物品
-            pass
+            keypoints = r.keypoints.xy.cpu().numpy()
+            if keypoints.size != 0:
+                for keypoint in keypoints:
+                    left_wrist = list(map(int, keypoint[9]))
+                    right_wrist = list(map(int, keypoint[10]))
+
+
+                    points = [left_wrist, right_wrist]
+
+
+                    if not self.exam_flag[3]:
+                        is_inside = any(is_point_in_polygon(point,self.WORKING_ROPE_REGION) for point in points)
+                        if is_inside:
+                            self.exam_flag[3]=True
+                    
+                    if not self.exam_flag[4]:
+                        is_inside = any(is_point_in_polygon(point,self.SAFETY_ROPE_REGION) for point in points)
+                        if is_inside:
+                            self.exam_flag[4]=True
 
 
 
@@ -96,6 +107,10 @@ class ResultProcessor(BaseResultProcessor):
 
                 if r.names[int(cls)] == "self_locking":
                     self_locking_position=tuple(map(int, box))
+            
+            if safety_belt_position is not None and self_locking_position is not None:
+                if is_boxes_intersect(safety_belt_position,self_locking_position):
+                    self.exam_flag[7]=True
 
 
 

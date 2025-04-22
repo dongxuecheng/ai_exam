@@ -6,7 +6,7 @@ conda activate fastapi
 
 # Configuration
 PORT=5005
-HOST="172.16.22.90"
+HOST="127.0.0.1"
 
 # Check if port is in use and kill processes
 echo "Checking port ${PORT}..."
