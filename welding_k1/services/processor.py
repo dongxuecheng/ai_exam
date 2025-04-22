@@ -9,7 +9,8 @@ class ResultProcessor(BaseResultProcessor):
         super().__init__(weights_paths, images_dir, img_url_path)
 
         self.human_postion=Value('b', False)  # 用来判断穿戴的人是否在指定位置
-        self.save_img_flag=Value('b', False)  # 用来判断是否保存图片
+        self.save_img_flag=Value('b', False)  # 用来传递保存图片的标志
+        self.img_saved=Value('b', False) # 若已保存图片，则设置为True
 
         self.manager = Manager()
         self.img_rul = self.manager.dict()#用来存放图片url
@@ -31,8 +32,20 @@ class ResultProcessor(BaseResultProcessor):
         }#用来在检测中记录，但不传递
 
     def reset_variables(self):
-        self.img_rul.clear()#清空图片url
-        #TODO :清空穿戴物品的数量和种类还没完成
+        #每次重置检测的变量
+        for key in self.detection_items:
+            self.detection_items[key] = 0
+
+    def init_variables(self):
+        logger.info("Resetting variables for wearing exam")
+        #每次考试前重置变量
+        self.human_postion.value = False
+        self.save_img_flag.value = False
+        self.img_saved.value = False
+        for key in self.wearing_items:
+            self.wearing_items[key] = 0
+        for key in self.detection_items:
+            self.detection_items[key] = 0
 
 
     def process_result(self, r, weights_path):
@@ -48,8 +61,8 @@ class ResultProcessor(BaseResultProcessor):
                     self.human_postion.value=True #人在指定位置
                                         
         if weights_path==self.weights_paths[1]:#目标检测
-            pass
-            #self.reset_variables()
+            
+            self.reset_variables()
             boxes = r.boxes.xyxy.cpu().numpy()
             classes = r.boxes.cls.cpu().numpy()
             
@@ -68,12 +81,15 @@ class ResultProcessor(BaseResultProcessor):
                 self.wearing_items['gloves']  = min(max(self.wearing_items['gloves'] , self.detection_items["gloves"]), 2)
                 self.wearing_items['shoes']  = min(max(self.wearing_items['shoes'] , self.detection_items["shoes"]), 2)
 
-            if self.save_img_flag.value:
+            if self.save_img_flag.value and not self.img_saved.value:
                 save_time = datetime.now().strftime('%Y%m%d_%H%M')
                 img_path = f"{self.images_dir}/welding_wearing_{save_time}.jpg"
                 post_path = f"{self.img_url_path}/welding_wearing_{save_time}.jpg"
                 r.save(img_path)
                 self.img_rul['welding_wearing']=post_path
+                self.img_saved.value=True
+                logger.info(f"Image saved at {img_path}")
+            
 
 
 

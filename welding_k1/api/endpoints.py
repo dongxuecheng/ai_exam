@@ -54,7 +54,6 @@ async def end_wearing_exam(service: DetectionManagerDep) -> StatusResponse:
 async def human_postion_status(service: DetectionManagerDep) -> StatusResponse:
     """Get human_postion_status"""
     try:
-        logger.info("Starting exam")
         if service.get_human_postion():
             logger.info("IN_POSTION")
             return StatusResponse(status="IN_POSTION")
@@ -71,7 +70,7 @@ async def wearing_status(service: DetectionManagerDep) -> WearingStatusResponse:
     """Get examination status"""
     try:
         service.set_save_img_flag(True)
-        time.sleep(3)#TODO 寻找更好方法实现
+        time.sleep(1)#TODO 寻找更好方法实现
         
         wearing_items=service.get_wearing_items()
         image=service.get_wearing_img()
@@ -84,6 +83,7 @@ async def wearing_status(service: DetectionManagerDep) -> WearingStatusResponse:
         for key, value in wearing_items.items():
             json_array.append({"name":key,"number":value})
 
+        service.init_variables()
         return WearingStatusResponse(status="SUCCESS", data=json_array, image=image['welding_wearing'])
         
     except Exception as e:

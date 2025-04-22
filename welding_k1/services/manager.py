@@ -17,10 +17,10 @@ class DetectionManager(BaseDetectionManager):
         super().__init__(config, ResultProcessor, logger)
 
     #焊接穿戴考核独有的方法
-    def init_reset_variables(self):
+    def init_variables(self):
         """初始化重置变量"""
-        if self.result_processor and hasattr(self.result_processor, 'init_reset_variables'):
-            self.result_processor.init_reset_variables()
+        if self.result_processor and hasattr(self.result_processor, 'init_variables'):
+            self.result_processor.init_variables()
             
     def get_human_postion(self):
         """获取考试得分"""
