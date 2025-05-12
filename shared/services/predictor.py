@@ -90,6 +90,8 @@ class BaseYOLOPredictor:
             if 'yolo11l-seg' in weights_path.lower():
                 results = model.predict(frame, verbose=False, conf=0.6,classes=[0])[0]
                     # Additional parameters for segmentation models if needed
+            elif 'welding_wearing' in weights_path.lower():
+                results = model.predict(frame, verbose=False, conf=0.6, classes=[0,3,10])[0]
             else:
                 results = model.predict(frame, verbose=False, conf=0.6)[0]
             self.result_processor.process_result(results, weights_path)

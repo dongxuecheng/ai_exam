@@ -5,7 +5,22 @@ from ..core import logger
 from shared.services import BaseResultProcessor
 
 class ResultProcessor(BaseResultProcessor):
-    SAFE_AREA = [(1012,0),(996,382),(1764,396),(1905,0)]#油桶和扫把安全区域
+
+    
+    # SAFE_AREA = [(1012,0),(996,382),(1764,396),(1905,0)]#油桶和扫把安全区域
+
+    # FIRST_LINE_AREA = (644, 879, 926, 1245)#一次线区域
+    # WELDING_MACHINE_AREA = (936, 880, 1546, 1279)#焊机区域
+    # GUN_SECONDARY_LINE_AREA = (1578, 1028, 1866, 1116)#焊枪二次线区域
+    # GROUND_SECONDARY_LINE_AREA = (1574, 1196, 1841, 1264)#接地夹二次线区域
+
+    # GUN_GROUND_DEFAULT_AREA = (649, 476, 1107, 918)#焊枪接地夹默认区域
+
+    # GROUNDING_WIRE_AREA = (623, 252, 2026, 1379)#焊台上的搭铁线
+    # WELDING_PIECE_AREA = (966, 700, 1558, 1101)#焊台上的焊件区域
+
+    #机电学院焊接区域
+    SAFE_AREA = [(1563, 0), (1520, 399), (2006, 554), (2159, 0)]#油桶和扫把安全区域
 
     FIRST_LINE_AREA = (644, 879, 926, 1245)#一次线区域
     WELDING_MACHINE_AREA = (936, 880, 1546, 1279)#焊机区域
@@ -56,7 +71,7 @@ class ResultProcessor(BaseResultProcessor):
                     box=list(map(int, box))#转换为int类型
                     center_point = ((box[0]+box[2])//2,(box[1]+box[3])//2)
                     if is_point_in_polygon(center_point, self.SAFE_AREA):
-                        #self.reset_flag[0] = True#表面油桶不在危险区域，所以需要复位
+                        self.reset_flag[0] = True#表面油桶不在危险区域，所以需要复位
                         self.exam_flag[0]=True#油桶已经排除在危险区域外
                     else:
                         self.reset_flag[0] = False#表面油桶在危险区域，所以不需要复位
@@ -112,7 +127,7 @@ class ResultProcessor(BaseResultProcessor):
                     else:
                         self.exam_flag[22]=False 
 
-                elif r.names[int(cls)] == "grounding_wire ":#TODO 多了个空格
+                elif r.names[int(cls)] == "grounding_wire":#TODO 多了个空格
                     #logger.info('搭铁线')
                     if is_boxes_intersect(tuple(map(int, box)), self.GUN_GROUND_DEFAULT_AREA):
                         self.reset_flag[2] = False
@@ -174,6 +189,7 @@ class ResultProcessor(BaseResultProcessor):
 
             if not brush_flag and not hammer_flag and self.exam_flag[19]:
                 self.exam_flag[20]=True#TODO 检查考件，临时处理
+                self.exam_flag[21]=True #焊后场地清理
 
 
         elif weights_path==self.weights_paths[4]:#分类，焊台
@@ -188,10 +204,10 @@ class ResultProcessor(BaseResultProcessor):
             
             classes = r.boxes.cls.cpu().numpy()
             for cls in classes:
-                if r.names[int(cls)] == "open":
-                    #self.reset_flag[5] = True
+                if r.names[int(cls)] == "welding_switch_on":
+                    self.reset_flag[5] = True
                     self.exam_flag[8]=True
-                elif r.names[int(cls)] == "close":
+                elif r.names[int(cls)] == "welding_switch_off":
                     self.reset_flag[5] = False
                     if self.exam_flag[8]:
                         self.exam_flag[15]=True           

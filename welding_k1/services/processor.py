@@ -5,6 +5,9 @@ from shared.utils import is_boxes_intersect
 from shared.services import BaseResultProcessor
 
 class ResultProcessor(BaseResultProcessor):
+
+    DETECTION_WEARING_AREA= (0, 0, 1920, 1080) #检测穿戴的区域
+
     def __init__(self,weights_paths: list[str],images_dir, img_url_path):
         super().__init__(weights_paths, images_dir, img_url_path)
 
@@ -15,21 +18,24 @@ class ResultProcessor(BaseResultProcessor):
         self.manager = Manager()
         self.img_rul = self.manager.dict()#用来存放图片url
 
-        self.wearing_items = self.manager.dict({
-            "pants": 0,
-            'jacket': 0,
-            'helmet': 0,
-            'gloves': 0,
-            'shoes': 0
-        })#存放穿戴物品的数量和种类，用来直接在多进程中进行传递数据
-
         self.detection_items = {
-            "pants": 0,
-            'jacket': 0,
+            "brush": 1,#刷子和锤子默认给1个
+            'hammer': 1,
             'helmet': 0,
             'gloves': 0,
-            'shoes': 0
+            'mask': 0
         }#用来在检测中记录，但不传递
+
+        self.wearing_items = self.manager.dict(self.detection_items)
+        # self.wearing_items = self.manager.dict({
+        #     "pants": 0,
+        #     'jacket': 0,
+        #     'helmet': 0,
+        #     'gloves': 0,
+        #     'shoes': 0
+        # })#存放穿戴物品的数量和种类，用来直接在多进程中进行传递数据
+
+
 
     def reset_variables(self):
         #每次重置检测的变量
@@ -57,7 +63,7 @@ class ResultProcessor(BaseResultProcessor):
             self.human_postion.value=False
             boxes = r.boxes.xyxy.cpu().numpy()
             for box in boxes:
-                if is_boxes_intersect(tuple(map(int, box)), (0, 0, 1920, 1080)):
+                if is_boxes_intersect(tuple(map(int, box)), self.DETECTION_WEARING_AREA):
                     self.human_postion.value=True #人在指定位置
                                         
         if weights_path==self.weights_paths[1]:#目标检测
@@ -67,7 +73,7 @@ class ResultProcessor(BaseResultProcessor):
             classes = r.boxes.cls.cpu().numpy()
             
             for box, cls in zip(boxes, classes):
-                if is_boxes_intersect(tuple(map(int, box)), (0, 0, 1920, 1080)):
+                if is_boxes_intersect(tuple(map(int, box)), self.DETECTION_WEARING_AREA):
                     self.detection_items[r.names[int(cls)]] += 1#对应的物品数量加1
         
         self.save_step(r, weights_path)
@@ -75,11 +81,11 @@ class ResultProcessor(BaseResultProcessor):
     def save_step(self,r,weights_path):
         if weights_path==self.weights_paths[1]:
             if self.human_postion.value:
-                self.wearing_items['pants'] = min(max(self.wearing_items['pants'], self.detection_items["pants"]), 1)
-                self.wearing_items['jacket'] = min(max(self.wearing_items['jacket'] , self.detection_items["jacket"]), 1)
+                #self.wearing_items['brush'] = min(max(self.wearing_items['brush'], self.detection_items["brush"]), 1)
+                #self.wearing_items['hammer'] = min(max(self.wearing_items['hammer'] , self.detection_items["hammer"]), 1)
+                self.wearing_items['mask'] = min(max(self.wearing_items['mask'] , self.detection_items["mask"]), 1)
                 self.wearing_items['helmet']  = min(max(self.wearing_items['helmet'] , self.detection_items["helmet"]), 1)
                 self.wearing_items['gloves']  = min(max(self.wearing_items['gloves'] , self.detection_items["gloves"]), 2)
-                self.wearing_items['shoes']  = min(max(self.wearing_items['shoes'] , self.detection_items["shoes"]), 2)
 
             if self.save_img_flag.value and not self.img_saved.value:
                 save_time = datetime.now().strftime('%Y%m%d_%H%M')

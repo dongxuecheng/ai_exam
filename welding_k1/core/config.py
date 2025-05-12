@@ -24,7 +24,7 @@ WELDING_K1_CONFIG= ServerConfig(
     server_port=5001,
     weights_paths=[
         os.path.join(WEIGHTS_BASE_DIR, 'yolo11n-pose.pt'),
-        os.path.join(WEIGHTS_BASE_DIR, 'ch6_wearing_detect_115.pt')
+        os.path.join(WEIGHTS_BASE_DIR, 'jidian/welding_wearing.pt')
     ],
     images_dir=IMAGES_DIR,
     static_mount_path='/welding_k1',#url中的路径
