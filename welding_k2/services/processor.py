@@ -110,8 +110,8 @@ class ResultProcessor(BaseResultProcessor):
             boxes = r.boxes.xyxy.cpu().numpy()
             classes = r.boxes.cls.cpu().numpy()
             
-            #self.reset_flag[2] = True
-            #self.reset_flag[1] = True
+            self.reset_flag[2] = True
+            self.reset_flag[1] = True
 
             for box, cls in zip(boxes, classes):
                 #logger.info(r.names[int(cls)] )
@@ -138,13 +138,13 @@ class ResultProcessor(BaseResultProcessor):
                         self.exam_flag[23]=False
 
                 elif r.names[int(cls)] == "red_light_on":#红灯亮,打开总开关
-                    #self.reset_flag[3]=True
+                    self.reset_flag[3]=True
                     self.exam_flag[6]=True
 
 
 
                 elif r.names[int(cls)] == "green_light_on":#绿灯亮，打开漏电保护开关
-                    #self.reset_flag[4]=True
+                    self.reset_flag[4]=True
                     self.exam_flag[7]=True
 
                 elif r.names[int(cls)] == "red_light_off":#红灯灭，关闭总开关
