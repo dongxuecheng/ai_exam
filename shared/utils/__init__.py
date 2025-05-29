@@ -11,12 +11,28 @@ from .geometry import (
     calculate_rect_polygon_iou
 )
 
+from .config import (
+    get_env_var,
+    get_env_int,
+    parse_target_models,
+    get_base_dir,
+    create_stream_configs,
+    create_server_config
+)
+
 # 导出所有公共接口
 __all__ = [
     # 几何函数
     'is_boxes_intersect',
     'is_point_in_polygon',
-    'calculate_mask_rect_iou'
+    'calculate_mask_rect_iou',
     'is_point_in_rect',
-    'calculate_rect_polygon_iou'
+    'calculate_rect_polygon_iou',
+    # 配置函数
+    'get_env_var',
+    'get_env_int',
+    'parse_target_models',
+    'get_base_dir',
+    'create_stream_configs',
+    'create_server_config'
 ]

@@ -1,6 +1,6 @@
-from shared.schemas import StreamConfig, ServerConfig
+# filepath: /home/dxc/ai_exam/welding2_k2/core/config.py
+from shared.utils.config import create_server_config
 from pathlib import Path
-import os
 
 # 获取项目根目录
 BASE_DIR = Path(__file__).parent.parent.parent
@@ -10,72 +10,11 @@ IMAGES_DIR = BASE_DIR / 'images'/ "welding2_k2"
 # 确保必要的目录存在
 WEIGHTS_BASE_DIR.mkdir(parents=True, exist_ok=True)
 
-# 耀安一楼
-STREAM_CONFIGS = [
-    StreamConfig(
-        rtsp_url="rtsp://admin:yaoan1234@172.16.22.230/cam/realmonitor?channel=1&subtype=0",
-        target_models={0}  #油桶/扫把视角视频流 需要在顶部，目标检测（油桶，扫把）
-    ),
-    StreamConfig(
-        rtsp_url="rtsp://admin:yaoan1234@172.16.22.231/cam/realmonitor?channel=1&subtype=0",
-        target_models={1}  #垂直向下，检测焊机二次线的视角，分割（人体）来判断二次线的交集的大小
-    ),
-    StreamConfig(
-        rtsp_url="rtsp://admin:yaoan1234@172.16.22.247/cam/realmonitor?channel=1&subtype=0",
-        target_models={2,3}  # 拍摄开关灯视角，焊枪，搭铁线视频流（目标检测上述物体）,分割检测是否触碰气瓶
-    ),
-    StreamConfig(
-        rtsp_url="rtsp://admin:yaoan1234@172.16.22.232/cam/realmonitor?channel=1&subtype=0",
-        target_models={4,5}  # 焊台视角，搭铁线视频流，目标检测焊件，搭铁线，刷子，铁锤，图像分类焊接过程
-    ),
-    StreamConfig(
-        rtsp_url="rtsp://admin:yaoan1234@172.16.22.238/cam/realmonitor?channel=1&subtype=0",
-        target_models={6}  # 焊机开关视频流,目标检测（开关）
-    )
-]
-
-# 机电学院
-
-# STREAM_CONFIGS = [
-#     StreamConfig(
-#         rtsp_url="rtsp://admin:ya147369@@192.168.1.127/cam/realmonitor?channel=1&subtype=0",
-#         target_models={0}  #油桶/扫把视角视频流 需要在顶部，目标检测（油桶，扫把）
-#     ),
-#     StreamConfig(
-#         rtsp_url="rtsp://admin:ya147369@@192.168.1.109/cam/realmonitor?channel=1&subtype=0",
-#         target_models={1}  #垂直向下，检测焊机二次线的视角，分割（人体）来判断二次线的交集的大小
-#     ),
-#     StreamConfig(
-#         rtsp_url="rtsp://admin:ya147369@@192.168.1.124/cam/realmonitor?channel=1&subtype=0",
-#         target_models={2}  # 拍摄开关灯视角，焊枪，搭铁线视频流（目标检测上述物体）
-#     ),
-#     StreamConfig(
-#         rtsp_url="rtsp://admin:ya147369@@192.168.1.110/cam/realmonitor?channel=1&subtype=0",
-#         target_models={3,4}  # 焊台视角，搭铁线视频流，目标检测焊件，搭铁线，刷子，铁锤，图像分类焊接过程
-#     ),
-#     StreamConfig(
-#         rtsp_url="rtsp://admin:ya147369@@192.168.1.127/cam/realmonitor?channel=1&subtype=0",
-#         target_models={5}  # 焊机开关视频流,目标检测（开关），分割（人体）来判断一次线
-#     )
-# ]
-
-
-WELDING2_K2_CONFIG= ServerConfig(
-    server_ip='127.0.0.1',
-    server_port=5003,
-    weights_paths=[
-        os.path.join(WEIGHTS_BASE_DIR, 'welding_oil_tank_last.pt'),
-        os.path.join(WEIGHTS_BASE_DIR, 'yolo11l-seg1.pt'),
-        os.path.join(WEIGHTS_BASE_DIR, 'welding_light_last.pt'),
-        os.path.join(WEIGHTS_BASE_DIR, 'yolo11l-seg2.pt'),
-        os.path.join(WEIGHTS_BASE_DIR, 'welding_desk_last.pt'),
-        os.path.join(WEIGHTS_BASE_DIR, 'welding_cls_last.pt'),
-        os.path.join(WEIGHTS_BASE_DIR, 'welding_switch_last.pt')
-    ],
-    images_dir=IMAGES_DIR,
-    static_mount_path='/welding2_k2',#url中的路径
-    img_url_path=f'http://127.0.0.1:5003/welding2_k2',
-    stream_configs=STREAM_CONFIGS
+# 使用环境变量配置创建服务器配置
+WELDING2_K2_CONFIG = create_server_config(
+    service_prefix='WELDING2_K2',
+    weights_keys=['OIL_TANK', 'SEG', 'LIGHT_VIEW', 'SEG_GAS', 'DESK', 'CLS', 'SWITCH'],
+    stream_count=5
 )
 
 """
