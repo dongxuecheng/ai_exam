@@ -29,7 +29,7 @@ class ResultProcessor(BaseResultProcessor):
 
     GAS_CYLINDER_AREA = (644, 879, 926, 1245)#气瓶区域
 
-    GUN_GROUND_DEFAULT_AREA = (649, 476, 1107, 918)#焊枪接地夹默认区域
+    GUN_GROUND_DEFAULT_AREA = (649, 476, 1107, 918)#焊枪接地夹默认区域，这里要改成油桶视角下的
 
     GROUNDING_WIRE_AREA = (623, 252, 2026, 1379)#焊台上的搭铁线
     WELDING_PIECE_AREA = (966, 700, 1558, 1101)#焊台上的焊件区域
@@ -128,34 +128,11 @@ class ResultProcessor(BaseResultProcessor):
             boxes = r.boxes.xyxy.cpu().numpy()
             classes = r.boxes.cls.cpu().numpy()
             
-            self.reset_flag[5] = True
-            self.reset_flag[4] = True
 
             for box, cls in zip(boxes, classes):
-                #logger.info(r.names[int(cls)] )
 
-                if r.names[int(cls)] == "welding_gun":
-                    #logger.info('焊枪')
-                    #logger.info(self.GUN_SECONDARY_LINE_AREA)
-                    if is_boxes_intersect(tuple(map(int, box)), self.GUN_GROUND_DEFAULT_AREA):#(x1,y1,x2,y2)
-                        self.reset_flag[4] = False #焊枪在指定区域，不需要复位
-                        #logger.info('焊枪不需要复位')
-                        if self.exam_flag[19]:#完成焊接作业
-                            self.exam_flag[20]=True
-                    # else:
-                    #     self.exam_flag[20]=False 
 
-                elif r.names[int(cls)] == "grounding_wire":#TODO 多了个空格
-                    #logger.info('搭铁线')
-                    if is_boxes_intersect(tuple(map(int, box)), self.GUN_GROUND_DEFAULT_AREA):
-                        self.reset_flag[5] = False
-                        #logger.info('搭铁线没有复位')
-                        if self.exam_flag[19]:
-                            self.exam_flag[21]=True
-                    # else:
-                    #     self.exam_flag[21]=False
-
-                elif r.names[int(cls)] == "red_light_on":#红灯亮,打开总开关
+                if r.names[int(cls)] == "red_light_on":#红灯亮,打开总开关
                     self.reset_flag[1]=True
                     self.exam_flag[6]=True
 
@@ -230,7 +207,32 @@ class ResultProcessor(BaseResultProcessor):
                     self.reset_flag[3] = False
                     if self.exam_flag[8]:
                         self.exam_flag[14]=True           
+        
+        elif weights_path==self.weights_paths[7]:# 油桶视角，目标检测焊枪与接地夹
+            boxes = r.boxes.xyxy.cpu().numpy()
+            classes = r.boxes.cls.cpu().numpy()
+            
+            self.reset_flag[5] = True
+            self.reset_flag[4] = True
 
+            for box, cls in zip(boxes, classes):
+                #logger.info(r.names[int(cls)] )
+
+                if r.names[int(cls)] == "welding_gun":
+                    if is_boxes_intersect(tuple(map(int, box)), self.GUN_GROUND_DEFAULT_AREA):#(x1,y1,x2,y2)
+                        self.reset_flag[4] = False #焊枪在指定区域，不需要复位
+                        #logger.info('焊枪不需要复位')
+                        if self.exam_flag[19]:#完成焊接作业
+                            self.exam_flag[20]=True
+
+
+                elif r.names[int(cls)] == "grounding_wire":#TODO 多了个空格
+                    #logger.info('搭铁线')
+                    if is_boxes_intersect(tuple(map(int, box)), self.GUN_GROUND_DEFAULT_AREA):
+                        self.reset_flag[5] = False
+                        #logger.info('搭铁线没有复位')
+                        if self.exam_flag[19]:
+                            self.exam_flag[21]=True
              
             
         self.save_step(r,weights_path)
@@ -277,9 +279,7 @@ class ResultProcessor(BaseResultProcessor):
             (self.exam_flag[6], 'welding_exam_7'),
             (self.exam_flag[7], 'welding_exam_8'),
             (self.exam_flag[15], 'welding_exam_16'),
-            (self.exam_flag[16], 'welding_exam_17'),
-            (self.exam_flag[20], 'welding_exam_21'),
-            (self.exam_flag[21], 'welding_exam_22')
+            (self.exam_flag[16], 'welding_exam_17')
             ],
             #目标检测，焊台视角
             self.weights_paths[4]: [
@@ -297,6 +297,11 @@ class ResultProcessor(BaseResultProcessor):
             self.weights_paths[6]: [
             (self.exam_flag[8], 'welding_exam_9'),
             (self.exam_flag[14], 'welding_exam_15')
+            ],
+            #油桶视角，目标检测焊枪与接地夹
+            self.weights_paths[7]: [
+            (self.exam_flag[20], 'welding_exam_21'),
+            (self.exam_flag[21], 'welding_exam_22')
             ]
         }
         if self.exam_status.value and weights_path in exam_steps:
