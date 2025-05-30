@@ -1,28 +1,22 @@
 #!/bin/bash
 
+# Load common configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/common.sh"
+
+# Service specific configuration
+SERVICE_NAME="welding2_k2"
+HOST="${WELDING2_K2_SERVER_IP}"
+PORT="${WELDING2_K2_SERVER_PORT}"
+
+# Change to project directory
+cd "${PROJECT_DIR}"
+
 # Activate conda environment
-eval "$(conda shell.bash hook)"
-conda activate fastapi
+activate_conda "${CONDA_ENV_NAME}"
 
-# Configuration
-PORT=5003
-HOST="127.0.0.1"
+# Kill existing processes on port
+kill_port_processes "${PORT}"
 
-# Check if port is in use and kill processes
-echo "Checking port ${PORT}..."
-if lsof -Pi :${PORT} -sTCP:LISTEN -t >/dev/null ; then
-    echo "Port ${PORT} is in use. Killing existing processes..."
-    lsof -ti :${PORT} | xargs kill -9
-    echo "Processes on port ${PORT} have been terminated."
-    # Wait a moment for processes to fully terminate
-    sleep 2
-fi
-# Change to the welding_k2 directory
-cd /home/dxc/ai_exam
-# Activate conda environment
-eval "$(conda shell.bash hook)"
-conda activate fastapi
-
-# Run FastAPI application
-echo "Starting FastAPI application..."
-uvicorn welding2_k2.main:app --host ${HOST} --port ${PORT}
+# Start FastAPI application
+start_fastapi "${SERVICE_NAME}" "${HOST}" "${PORT}"
