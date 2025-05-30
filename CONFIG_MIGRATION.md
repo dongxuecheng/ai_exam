@@ -6,6 +6,8 @@ This document describes the new environment-based configuration system for the A
 
 The configuration system has been migrated from hardcoded Python configurations to environment variable-based configurations using `.env` files. This provides better flexibility, security, and environment-specific customization.
 
+**All startup scripts and service configurations now use environment variables loaded from the `.env` file.**
+
 ## Features
 
 - **Environment-based**: All configurations are now loaded from environment variables
@@ -13,6 +15,7 @@ The configuration system has been migrated from hardcoded Python configurations 
 - **Flexible**: Easy to customize for different environments (development, production, etc.)
 - **Secure**: Sensitive information can be kept in environment variables
 - **Type-safe**: Automatic type conversion and validation
+- **Script Integration**: Startup scripts use shared configuration loading
 
 ## Configuration Files
 
@@ -21,6 +24,7 @@ The configuration system has been migrated from hardcoded Python configurations 
 - **`.env`**: Main environment configuration file (active configuration)
 - **`.env.example`**: Example configuration template with documentation
 - **`shared/utils/config.py`**: Configuration loading utilities
+- **`scripts/common.sh`**: Common script configuration loader
 
 ### Service Configuration Files
 
@@ -33,11 +37,24 @@ Each service now has a simplified configuration file that uses the utility funct
 - `welding3_k2/core/config.py`
 - `sling_k2/core/config.py`
 
+### Startup Scripts
+
+All startup scripts now use environment configuration:
+
+- `scripts/start_basket_k2.sh`
+- `scripts/start_welding_k1.sh`
+- `scripts/start_welding_k2.sh`
+- `scripts/start_welding2_k2.sh`
+- `scripts/start_welding3_k2.sh`
+- `scripts/start_sling_k2.sh`
+
 ## Environment Variables Structure
 
-### Global Settings
+### Global Script Settings
 
 ```bash
+CONDA_ENV_NAME=fastapi
+PROJECT_DIR=/home/dxc/ai_exam
 BASE_DIR=/home/dxc/ai_exam
 DEFAULT_QUEUE_SIZE=100
 DEFAULT_FRAME_SKIP=10
@@ -73,13 +90,24 @@ BASKET_K2_STREAM3_URL=rtsp://admin:yaoan1234@172.16.22.242/cam/realmonitor?chann
 BASKET_K2_STREAM3_TARGET_MODELS=2,3
 ```
 
+## Port Configuration
+
+Each service uses a unique port:
+
+- **BASKET_K2**: 5005
+- **WELDING1_K1**: 5001
+- **WELDING1_K2**: 5002
+- **WELDING2_K2**: 5003
+- **WELDING3_K2**: 5004
+- **SLING_K2**: 5006
+
 ## Services Configuration
 
 ### Supported Services
 
 1. **BASKET_K2**: Basket inspection service (3 streams, 4 weights)
-2. **WELDING_K1**: Basic welding service (1 stream, 2 weights)
-3. **WELDING_K2**: Advanced welding service (5 streams, 6 weights)
+2. **WELDING1_K1**: Basic welding service (1 stream, 2 weights)
+3. **WELDING1_K2**: Advanced welding service (5 streams, 6 weights)
 4. **WELDING2_K2**: Enhanced welding service (5 streams, 7 weights)
 5. **WELDING3_K2**: Extended welding service (5 streams, 8 weights)
 6. **SLING_K2**: Sling inspection service (2 streams, 4 weights)
@@ -97,6 +125,38 @@ SERVICE_CONFIG = create_server_config(
     stream_count=N
 )
 ```
+
+## Startup Scripts
+
+### Common Configuration Loading
+
+All startup scripts use the common configuration loader:
+
+```bash
+#!/bin/bash
+
+# Get script directory and load common configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/common.sh"
+
+# Load environment variables
+load_env_config
+
+# Get configuration for service
+PORT=${SERVICE_NAME_SERVER_PORT}
+HOST=${SERVICE_NAME_SERVER_IP}
+
+# Run FastAPI application
+uvicorn service_name.main:app --host ${HOST} --port ${PORT}
+```
+
+### Script Features
+
+- **Automatic port detection and cleanup**
+- **Conda environment activation**
+- **Configuration validation**
+- **Error handling**
+- **Consistent logging**
 
 ## Usage
 

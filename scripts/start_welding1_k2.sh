@@ -5,9 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
 # Service specific configuration
-SERVICE_NAME="welding_k2"
-HOST="${WELDING_K2_SERVER_IP}"
-PORT="${WELDING_K2_SERVER_PORT}"
+SERVICE_NAME="welding1_k2"
+HOST="${WELDING1_K2_SERVER_IP}"
+PORT="${WELDING1_K2_SERVER_PORT}"
 
 # Change to project directory
 cd "${PROJECT_DIR}"

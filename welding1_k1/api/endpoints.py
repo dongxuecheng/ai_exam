@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from ..services import DetectionManager
 from functools import lru_cache
 from typing import Annotated
-from ..core import WELDING_K1_CONFIG,logger
+from ..core import WELDING1_K1_CONFIG,logger
 from shared.schemas import StatusResponse,WearingStatusResponse
 import time
 
@@ -10,7 +10,7 @@ router = APIRouter()
 
 @lru_cache()#单例模型
 def get_service() -> DetectionManager:
-    return DetectionManager(WELDING_K1_CONFIG)
+    return DetectionManager(WELDING1_K1_CONFIG)
 
 #依赖注入
 DetectionManagerDep=Annotated[DetectionManager,Depends(get_service)]
