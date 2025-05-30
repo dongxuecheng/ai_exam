@@ -4,8 +4,8 @@
 # =========================================
 
 global:
-  project_dir: /home/dxc/ai_exam
-  conda_env: fastapi
+  project_dir: /home/dxc/code/ai_exam
+  uv_env: .venv
   ip: 127.0.0.1
   defaults:
     queue_size: 100

@@ -82,8 +82,8 @@ start_service() {
     # Check if port is already in use
     check_and_kill_port "$port"
     
-    # Activate conda environment
-    activate_conda_env
+    # Activate UV virtual environment
+    activate_uv_env
     
     # Change to project directory
     cd "$PROJECT_DIR" || exit 1
@@ -122,36 +122,26 @@ check_and_kill_port() {
     fi
 }
 
-activate_conda_env() {
-    # Get conda environment name from YAML
-    local conda_env=$(python3 -c "
-import yaml
-from pathlib import Path
-
-config_path = Path('${PROJECT_DIR}/config.yaml')
-with open(config_path, 'r') as f:
-    config = yaml.safe_load(f)
-
-print(config['global'].get('conda_env', 'fastapi'))
-")
+activate_uv_env() {
+    echo "Activating UV virtual environment..."
     
-    if [ -z "$conda_env" ]; then
-        conda_env="fastapi"
+    # Check if .venv directory exists
+    if [ ! -d "$PROJECT_DIR/.venv" ]; then
+        echo "Error: UV virtual environment not found at $PROJECT_DIR/.venv"
+        echo "Please create the virtual environment first with: uv venv -p python3.12"
+        exit 1
     fi
     
-    echo "Activating conda environment: $conda_env"
-    
-    # Initialize conda for bash
-    eval "$(conda shell.bash hook)"
-    
-    # Activate environment
-    conda activate "$conda_env"
+    # Activate UV virtual environment
+    source "$PROJECT_DIR/.venv/bin/activate"
     
     if [ $? -eq 0 ]; then
-        echo "Successfully activated conda environment: $conda_env"
+        echo "Successfully activated UV virtual environment"
+        echo "Python path: $(which python)"
+        echo "Python version: $(python --version)"
     else
-        echo "Warning: Failed to activate conda environment: $conda_env"
-        echo "Using current environment"
+        echo "Error: Failed to activate UV virtual environment"
+        exit 1
     fi
 }
 
