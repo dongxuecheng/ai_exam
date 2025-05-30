@@ -11,13 +11,13 @@ from .geometry import (
     calculate_rect_polygon_iou
 )
 
-from .config import (
-    get_env_var,
-    get_env_int,
-    parse_target_models,
-    get_base_dir,
-    create_stream_configs,
-    create_server_config
+from .yaml_config import (
+    ConfigManager,
+    config_manager,
+    get_service_config,
+    get_service_names,
+    get_service_models,
+    get_service_streams
 )
 
 # 导出所有公共接口
@@ -28,11 +28,11 @@ __all__ = [
     'calculate_mask_rect_iou',
     'is_point_in_rect',
     'calculate_rect_polygon_iou',
-    # 配置函数
-    'get_env_var',
-    'get_env_int',
-    'parse_target_models',
-    'get_base_dir',
-    'create_stream_configs',
-    'create_server_config'
+    # YAML配置函数
+    'ConfigManager',
+    'config_manager',
+    'get_service_config',
+    'get_service_names',
+    'get_service_models',
+    'get_service_streams'
 ]
