@@ -37,12 +37,12 @@ services:
       img_url_path: http://127.0.0.1:5001/service_name
     
     models:
-      - name: MODEL_NAME
-        weight_file: model_file.pt
+      - model_file1.pt
+      - model_file2.pt
     
     streams:
       - url: rtsp://camera_url
-        target_models: [0, 1]
+        models: [model_file1.pt, model_file2.pt]
 ```
 
 ## Benefits of YAML Configuration
@@ -50,8 +50,10 @@ services:
 1. **Centralized Management**: All configurations in one place
 2. **Clean Structure**: Clear hierarchy and organization
 3. **Easy Maintenance**: Simple to add/modify services
-4. **No Hardcoding**: Models and streams defined in config, not code
-5. **Type Safety**: Automatic validation and error handling
+4. **Direct Model Reference**: Models referenced by filename, not abstract names
+5. **Intuitive Stream Configuration**: Streams directly specify which models to use
+6. **Type Safety**: Automatic validation and error handling
+7. **No Index Management**: No need to remember model indices
 
 ## Usage
 
@@ -70,7 +72,7 @@ from shared.utils.yaml_config import get_service_names, get_service_models, get_
 # Get all configured services
 services = get_service_names()
 
-# Get models for a specific service
+# Get models for a specific service (returns list of model filenames)
 models = get_service_models('service_name')
 
 # Get streams for a specific service
@@ -90,31 +92,22 @@ services:
       img_url_path: http://127.0.0.1:5008/new_service
     
     models:
-      - name: MODEL1
-        weight_file: model1.pt
-      - name: MODEL2
-        weight_file: model2.pt
+      - model1.pt
+      - model2.pt
     
     streams:
       - url: rtsp://camera1
-        target_models: [0]
+        models: [model1.pt]
       - url: rtsp://camera2
-        target_models: [1]
+        models: [model2.pt]
 ```
 
 2. Create service config file:
 ```python
 # new_service/core/config.py
-from shared.utils.yaml_config import get_service_config
-from pathlib import Path
+from shared.utils.config import get_service_config
 
-BASE_DIR = Path(__file__).parent.parent.parent
-WEIGHTS_BASE_DIR = BASE_DIR / 'weights' / "new_service"
-IMAGES_DIR = BASE_DIR / 'images' / "new_service"
-
-WEIGHTS_BASE_DIR.mkdir(parents=True, exist_ok=True)
-IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-
+# Automatically loads models and streams from YAML
 NEW_SERVICE_CONFIG = get_service_config('new_service')
 ```
 

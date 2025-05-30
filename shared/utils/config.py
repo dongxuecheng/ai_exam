@@ -60,12 +60,12 @@ class ConfigManager:
         static_mount_path = server_config['static_mount_path']
         img_url_path = server_config['img_url_path']
         
-        # Build weights paths from models list
+        # Build weights paths from simplified models list
         weights_paths = []
         models = service_config.get('models', [])
-        for model in models:
-            weight_filename = model['weight_file']
-            weight_path = str(weights_base_dir / weight_filename)
+        for weight_file in models:
+            # weight_file is now directly the filename string
+            weight_path = str(weights_base_dir / weight_file)
             weights_paths.append(weight_path)
         
         # Create stream configurations from streams list
@@ -88,10 +88,22 @@ class ConfigManager:
         queue_size = defaults.get('queue_size', 100)
         frame_skip = defaults.get('frame_skip', 10)
         
+        # Get models list to create model to index mapping
+        models = service_config.get('models', [])
+        model_to_index = {model: idx for idx, model in enumerate(models)}
+        
         streams = service_config.get('streams', [])
         for stream in streams:
             rtsp_url = stream['url']
-            target_models = set(stream.get('target_models', []))
+            
+            # Convert model names to indices
+            model_names = stream.get('models', [])
+            target_models = set()
+            for model_name in model_names:
+                if model_name in model_to_index:
+                    target_models.add(model_to_index[model_name])
+                else:
+                    raise ValueError(f"Model '{model_name}' not found in models list for service")
             
             config = StreamConfig(
                 rtsp_url=rtsp_url,
@@ -107,7 +119,7 @@ class ConfigManager:
         """Get list of all configured service names."""
         return list(self._config.get('services', {}).keys())
     
-    def get_service_models(self, service_name: str) -> List[Dict[str, str]]:
+    def get_service_models(self, service_name: str) -> List[str]:
         """Get model configurations for a service."""
         service_config = self.get_service_config(service_name)
         return service_config.get('models', [])
@@ -132,7 +144,7 @@ def get_service_names() -> List[str]:
     return config_manager.get_service_names()
 
 
-def get_service_models(service_name: str) -> List[Dict[str, str]]:
+def get_service_models(service_name: str) -> List[str]:
     """Get model configurations for a service."""
     return config_manager.get_service_models(service_name)
 

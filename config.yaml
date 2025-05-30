@@ -20,20 +20,16 @@ services:
       img_url_path: http://127.0.0.1:5006/sling_k2
     
     models:
-      - name: POSE1
-        weight_file: yolo11x-pose1.pt
-      - name: OIL_TANK
-        weight_file: yz_oil_tank.pt
-      - name: POSE2
-        weight_file: yolo11x-pose2.pt
-      - name: GROUNDING_WIRE
-        weight_file: yz_grounding_wire.pt
+      - yolo11x-pose1.pt
+      - yz_oil_tank.pt
+      - yolo11x-pose2.pt
+      - yz_grounding_wire.pt
     
     streams:
       - url: rtsp://admin:yaoan1234@172.16.22.238/cam/realmonitor?channel=1&subtype=0
-        target_models: [0, 1]
+        models: [yolo11x-pose1.pt, yz_oil_tank.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.44/cam/realmonitor?channel=1&subtype=0
-        target_models: [2, 3]
+        models: [yolo11x-pose2.pt, yz_grounding_wire.pt]
 
   # Basket K2 Service
   basket_k2:
@@ -44,22 +40,18 @@ services:
       img_url_path: http://127.0.0.1:5005/basket_k2
     
     models:
-      - name: POSE1
-        weight_file: yolo11l-pose1.pt
-      - name: OIL_TANK
-        weight_file: yz_oil_tank.pt
-      - name: POSE2
-        weight_file: yolo11l-pose2.pt
-      - name: GROUNDING_WIRE
-        weight_file: yz_grounding_wire.pt
+      - yolo11l-pose1.pt
+      - yz_oil_tank.pt
+      - yolo11l-pose2.pt
+      - yz_grounding_wire.pt
     
     streams:
       - url: rtsp://admin:yaoan1234@172.16.22.237/cam/realmonitor?channel=1&subtype=0
-        target_models: [0]
+        models: [yolo11l-pose1.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.230/cam/realmonitor?channel=1&subtype=0
-        target_models: [1]
+        models: [yz_oil_tank.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.242/cam/realmonitor?channel=1&subtype=0
-        target_models: [2, 3]
+        models: [yolo11l-pose2.pt, yz_grounding_wire.pt]
 
   # Welding1 K1 Service
   welding1_k1:
@@ -70,14 +62,12 @@ services:
       img_url_path: http://127.0.0.1:5001/welding1_k1
     
     models:
-      - name: POSE
-        weight_file: yolo11n-pose.pt
-      - name: WEARING
-        weight_file: jidian/welding_wearing.pt
+      - yolo11n-pose.pt
+      - jidian/welding_wearing.pt
     
     streams:
       - url: rtsp://admin:yaoan1234@172.16.22.235/cam/realmonitor?channel=1&subtype=0
-        target_models: [0, 1]
+        models: [yolo11n-pose.pt, jidian/welding_wearing.pt]
 
   # Welding1 K2 Service
   welding1_k2:
@@ -88,30 +78,24 @@ services:
       img_url_path: http://127.0.0.1:5002/welding1_k2
     
     models:
-      - name: OIL_TANK
-        weight_file: jidian/welding_oil_tank.pt
-      - name: SEG
-        weight_file: yolo11l-seg.pt
-      - name: LIGHT_VIEW
-        weight_file: jidian/welding_light_view.pt
-      - name: DESK
-        weight_file: jidian/welding_desk.pt
-      - name: CLS
-        weight_file: jidian/welding_cls.pt
-      - name: SWITCH
-        weight_file: jidian/welding_switch.pt
+      - jidian/welding_oil_tank.pt
+      - yolo11l-seg.pt
+      - jidian/welding_light_view.pt
+      - jidian/welding_desk.pt
+      - jidian/welding_cls.pt
+      - jidian/welding_switch.pt
     
     streams:
       - url: rtsp://admin:yaoan1234@172.16.22.230/cam/realmonitor?channel=1&subtype=0
-        target_models: [0]
+        models: [jidian/welding_oil_tank.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.231/cam/realmonitor?channel=1&subtype=0
-        target_models: [1]
+        models: [yolo11l-seg.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.247/cam/realmonitor?channel=1&subtype=0
-        target_models: [2]
+        models: [jidian/welding_light_view.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.232/cam/realmonitor?channel=1&subtype=0
-        target_models: [3, 4]
+        models: [jidian/welding_desk.pt, jidian/welding_cls.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.238/cam/realmonitor?channel=1&subtype=0
-        target_models: [5]
+        models: [jidian/welding_switch.pt]
 
   # Welding2 K2 Service
   welding2_k2:
@@ -122,32 +106,25 @@ services:
       img_url_path: http://127.0.0.1:5003/welding2_k2
     
     models:
-      - name: OIL_TANK
-        weight_file: welding_oil_tank_last.pt
-      - name: SEG
-        weight_file: yolo11l-seg1.pt
-      - name: LIGHT_VIEW
-        weight_file: welding_light_last.pt
-      - name: SEG_GAS
-        weight_file: yolo11l-seg2.pt
-      - name: DESK
-        weight_file: welding_desk_last.pt
-      - name: CLS
-        weight_file: welding_cls_last.pt
-      - name: SWITCH
-        weight_file: welding_switch_last.pt
+      - welding_oil_tank_last.pt
+      - yolo11l-seg1.pt
+      - welding_light_last.pt
+      - yolo11l-seg2.pt
+      - welding_desk_last.pt
+      - welding_cls_last.pt
+      - welding_switch_last.pt
     
     streams:
       - url: rtsp://admin:yaoan1234@172.16.22.230/cam/realmonitor?channel=1&subtype=0
-        target_models: [0]
+        models: [welding_oil_tank_last.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.231/cam/realmonitor?channel=1&subtype=0
-        target_models: [1]
+        models: [yolo11l-seg1.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.247/cam/realmonitor?channel=1&subtype=0
-        target_models: [2, 3]
+        models: [welding_light_last.pt, yolo11l-seg2.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.232/cam/realmonitor?channel=1&subtype=0
-        target_models: [4, 5]
+        models: [welding_desk_last.pt, welding_cls_last.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.238/cam/realmonitor?channel=1&subtype=0
-        target_models: [6]
+        models: [welding_switch_last.pt]
 
   # Welding3 K2 Service
   welding3_k2:
@@ -158,31 +135,23 @@ services:
       img_url_path: http://127.0.0.1:5007/welding3_k2
     
     models:
-      - name: OIL_TANK
-        weight_file: welding_oil_tank_last.pt
-      - name: SEG
-        weight_file: yolo11l-seg1.pt
-      - name: LIGHT_VIEW1
-        weight_file: welding_light_last1.pt
-      - name: SEG_GAS
-        weight_file: yolo11l-seg2.pt
-      - name: DESK
-        weight_file: welding_desk_last.pt
-      - name: CLS
-        weight_file: welding_cls_last.pt
-      - name: SWITCH
-        weight_file: welding_switch_last.pt
-      - name: LIGHT_VIEW2
-        weight_file: welding_light_last2.pt
+      - welding_oil_tank_last.pt
+      - yolo11l-seg1.pt
+      - welding_light_last1.pt
+      - yolo11l-seg2.pt
+      - welding_desk_last.pt
+      - welding_cls_last.pt
+      - welding_switch_last.pt
+      - welding_light_last2.pt
     
     streams:
       - url: rtsp://admin:yaoan1234@172.16.22.230/cam/realmonitor?channel=1&subtype=0
-        target_models: [0, 7]
+        models: [welding_oil_tank_last.pt, welding_light_last2.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.231/cam/realmonitor?channel=1&subtype=0
-        target_models: [1]
+        models: [yolo11l-seg1.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.247/cam/realmonitor?channel=1&subtype=0
-        target_models: [2, 3]
+        models: [welding_light_last1.pt, yolo11l-seg2.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.232/cam/realmonitor?channel=1&subtype=0
-        target_models: [4, 5]
+        models: [welding_desk_last.pt, welding_cls_last.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.238/cam/realmonitor?channel=1&subtype=0
-        target_models: [6]
+        models: [welding_switch_last.pt]
