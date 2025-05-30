@@ -1,4 +1,4 @@
-from shared.utils.yaml_config import get_service_config
+from shared.utils.config import get_service_config
 from pathlib import Path
 
 # 获取项目根目录

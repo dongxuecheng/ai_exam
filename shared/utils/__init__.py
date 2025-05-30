@@ -11,7 +11,7 @@ from .geometry import (
     calculate_rect_polygon_iou
 )
 
-from .yaml_config import (
+from .config import (
     ConfigManager,
     config_manager,
     get_service_config,
