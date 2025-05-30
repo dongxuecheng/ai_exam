@@ -6,6 +6,7 @@
 global:
   project_dir: /home/dxc/ai_exam
   conda_env: fastapi
+  ip: 127.0.0.1
   defaults:
     queue_size: 100
     frame_skip: 10
@@ -14,10 +15,8 @@ services:
   # Sling K2 Service
   sling_k2:
     server:
-      ip: 127.0.0.1
       port: 5006
       static_mount_path: /sling_k2
-      img_url_path: http://127.0.0.1:5006/sling_k2
     
     models:
       - yolo11x-pose1.pt
@@ -34,10 +33,8 @@ services:
   # Basket K2 Service
   basket_k2:
     server:
-      ip: 127.0.0.1
       port: 5005
       static_mount_path: /basket_k2
-      img_url_path: http://127.0.0.1:5005/basket_k2
     
     models:
       - yolo11l-pose1.pt
@@ -56,10 +53,8 @@ services:
   # Welding1 K1 Service
   welding1_k1:
     server:
-      ip: 127.0.0.1
       port: 5001
       static_mount_path: /welding1_k1
-      img_url_path: http://127.0.0.1:5001/welding1_k1
     
     models:
       - yolo11n-pose.pt
@@ -72,10 +67,8 @@ services:
   # Welding1 K2 Service
   welding1_k2:
     server:
-      ip: 127.0.0.1
       port: 5002
       static_mount_path: /welding1_k2
-      img_url_path: http://127.0.0.1:5002/welding1_k2
     
     models:
       - jidian/welding_oil_tank.pt
@@ -100,10 +93,8 @@ services:
   # Welding2 K2 Service
   welding2_k2:
     server:
-      ip: 127.0.0.1
       port: 5003
       static_mount_path: /welding2_k2
-      img_url_path: http://127.0.0.1:5003/welding2_k2
     
     models:
       - welding_oil_tank_last.pt
@@ -129,10 +120,8 @@ services:
   # Welding3 K2 Service
   welding3_k2:
     server:
-      ip: 127.0.0.1
       port: 5007
       static_mount_path: /welding3_k2
-      img_url_path: http://127.0.0.1:5007/welding3_k2
     
     models:
       - welding_oil_tank_last.pt

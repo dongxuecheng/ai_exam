@@ -24,6 +24,7 @@ Each service now has a simplified configuration file that automatically loads fr
 global:
   project_dir: /home/dxc/ai_exam
   conda_env: fastapi
+  ip: 127.0.0.1
   defaults:
     queue_size: 100
     frame_skip: 10
@@ -31,10 +32,8 @@ global:
 services:
   service_name:
     server:
-      ip: 127.0.0.1
       port: 5001
       static_mount_path: /service_name
-      img_url_path: http://127.0.0.1:5001/service_name
     
     models:
       - model_file1.pt

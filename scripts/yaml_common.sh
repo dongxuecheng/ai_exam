@@ -36,10 +36,13 @@ try:
         config = yaml.safe_load(f)
     
     service_config = config['services']['${service_name}']
+    global_config = config.get('global', {})
+    
     if '${config_key}' == 'port':
         print(service_config['server']['port'])
     elif '${config_key}' == 'ip':
-        print(service_config['server']['ip'])
+        # Use global IP instead of service-specific IP
+        print(global_config.get('ip', '127.0.0.1'))
     else:
         print(service_config.get('${config_key}', ''))
 except Exception as e:
@@ -190,11 +193,13 @@ with open(config_path, 'r') as f:
 
 service_config = config['services']['${service_name}']
 server_config = service_config['server']
+global_config = config.get('global', {})
+global_ip = global_config.get('ip', '127.0.0.1')
 
 print(f'Service: ${service_name}')
-print(f'  Server: {server_config[\"ip\"]}:{server_config[\"port\"]}')
+print(f'  Server: {global_ip}:{server_config[\"port\"]}')
 print(f'  Static Path: {server_config[\"static_mount_path\"]}')
-print(f'  Image URL: {server_config[\"img_url_path\"]}')
+print(f'  Image URL: http://{global_ip}:{server_config[\"port\"]}{server_config[\"static_mount_path\"]}')
 print(f'  Models: {len(service_config[\"models\"])}')
 print(f'  Streams: {len(service_config[\"streams\"])}')
 "

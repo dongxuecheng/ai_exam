@@ -55,10 +55,12 @@ class ConfigManager:
         
         # Get server configuration
         server_config = service_config['server']
-        server_ip = server_config['ip']
+        # Use global IP instead of service-specific IP
+        server_ip = global_config.get('ip', '127.0.0.1')
         server_port = server_config['port']
         static_mount_path = server_config['static_mount_path']
-        img_url_path = server_config['img_url_path']
+        # Generate img_url_path dynamically from global IP, port and static path
+        img_url_path = f"http://{server_ip}:{server_port}{static_mount_path}"
         
         # Build weights paths from simplified models list
         weights_paths = []
