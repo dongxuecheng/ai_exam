@@ -80,3 +80,9 @@ class LoggerManager:
         logger.addHandler(console_handler)
         
         return logger
+
+
+# 便捷函数
+def get_logger(service_name: str) -> logging.Logger:
+    """获取服务日志器的便捷函数"""
+    return LoggerManager.get_logger(service_name)

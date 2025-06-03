@@ -1,9 +1,9 @@
 """Core package for basket K2 detection service."""
 
-from .config import BASKET_K2_CONFIG
-from .logging import logger
+from .config import config, logger, service_name
 
 __all__ = [
-    "BASKET_K2_CONFIG",
-    "logger"
+    "config",
+    "logger",
+    "service_name"
 ]

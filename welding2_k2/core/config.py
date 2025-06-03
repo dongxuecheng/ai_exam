@@ -1,18 +1,13 @@
-# filepath: /home/dxc/ai_exam/welding2_k2/core/config.py
-from shared.utils.config import get_service_config
-from pathlib import Path
+from shared.service_init import init_service
 
-# 获取项目根目录
-BASE_DIR = Path(__file__).parent.parent.parent
-WEIGHTS_BASE_DIR = BASE_DIR / 'weights' / "welding2_k2"
-IMAGES_DIR = BASE_DIR / 'images' / "welding2_k2"
+# 初始化服务
+service_init = init_service("welding2_k2")
 
-# 确保必要的目录存在
-WEIGHTS_BASE_DIR.mkdir(parents=True, exist_ok=True)
-IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+# 导出配置和日志
+config = service_init.config
+logger = service_init.logger
+service_name = service_init.service_name
 
-# 使用YAML配置创建服务器配置
-WELDING2_K2_CONFIG = get_service_config('welding2_k2')
 
 """
 [复位]

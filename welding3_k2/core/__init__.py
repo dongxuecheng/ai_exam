@@ -1,9 +1,9 @@
 """Core package for welding3 K2 detection service."""
 
-from .config import WELDING3_K2_CONFIG
-from .logging import logger
+from .config import config, logger, service_name
 
 __all__ = [
-    "WELDING3_K2_CONFIG",
-    "logger"
+    "config",
+    "logger",
+    "service_name"
 ]

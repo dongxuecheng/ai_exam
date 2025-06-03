@@ -1,18 +1,9 @@
-from fastapi import FastAPI
 from .api import router 
-from fastapi.staticfiles import StaticFiles
-from .core import WELDING1_K1_CONFIG
+from .core import config, service_name
+from shared.app_factory import create_app as create_fastapi_app
 
-def create_app() -> FastAPI:
+def create_app():
     """应用程序工厂"""
-    #settings = Settings()
-    app = FastAPI(
-        title="Welding1 K1 API",
-        description="API for welding examination system",
-        version="1.0.0"
-    )
-    app.mount(WELDING1_K1_CONFIG.static_mount_path, StaticFiles(directory=WELDING1_K1_CONFIG.images_dir))
-    app.include_router(router)
-    return app
+    return create_fastapi_app(service_name, config, router)
 
 app = create_app()
