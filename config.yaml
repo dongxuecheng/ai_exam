@@ -10,6 +10,7 @@ global:
   defaults:
     queue_size: 100
     frame_skip: 10
+    gpu_device: 0  # Default GPU device
 
 services:
   # Sling K2 Service
@@ -17,6 +18,8 @@ services:
     server:
       port: 5006
       static_mount_path: /sling_k2
+    
+    gpu_device: 0  # GPU device for this service
     
     models:
       - yolo11x-pose1.pt
@@ -35,6 +38,8 @@ services:
     server:
       port: 5005
       static_mount_path: /basket_k2
+    
+    gpu_device: 1  # GPU device for this service
     
     models:
       - yolo11l-pose1.pt
@@ -56,6 +61,8 @@ services:
       port: 5001
       static_mount_path: /welding1_k1
     
+    gpu_device: 0  # GPU device for this service
+    
     models:
       - yolo11n-pose.pt
       - jidian/welding_wearing.pt
@@ -69,6 +76,8 @@ services:
     server:
       port: 5002
       static_mount_path: /welding1_k2
+    
+    gpu_device: 1  # GPU device for this service
     
     models:
       - jidian/welding_oil_tank.pt
@@ -96,6 +105,8 @@ services:
       port: 5003
       static_mount_path: /welding2_k2
     
+    gpu_device: 0  # GPU device for this service
+    
     models:
       - welding_oil_tank_last.pt
       - yolo11l-seg1.pt
@@ -122,6 +133,8 @@ services:
     server:
       port: 5007
       static_mount_path: /welding3_k2
+    
+    gpu_device: 1  # GPU device for this service
     
     models:
       - welding_oil_tank_last.pt

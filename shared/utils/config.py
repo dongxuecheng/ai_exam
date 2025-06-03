@@ -62,6 +62,10 @@ class ConfigManager:
         # Generate img_url_path dynamically from global IP, port and static path
         img_url_path = f"http://{server_ip}:{server_port}{static_mount_path}"
         
+        # Get GPU device configuration
+        defaults = global_config.get('defaults', {})
+        gpu_device = service_config.get('gpu_device', defaults.get('gpu_device', 0))
+        
         # Build weights paths from simplified models list
         weights_paths = []
         models = service_config.get('models', [])
@@ -80,7 +84,8 @@ class ConfigManager:
             images_dir=images_dir,
             static_mount_path=static_mount_path,
             img_url_path=img_url_path,
-            stream_configs=stream_configs
+            stream_configs=stream_configs,
+            gpu_device=gpu_device
         )
     
     def _create_stream_configs(self, service_config: Dict[str, Any], global_config: Dict[str, Any]) -> List[StreamConfig]:

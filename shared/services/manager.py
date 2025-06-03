@@ -53,7 +53,8 @@ class BaseDetectionManager:
                 self.config.weights_paths,
                 self.stream_manager.frame_queues,
                 self.result_processor,
-                custom_logger=self.logger
+                custom_logger=self.logger,
+                gpu_device=self.config.gpu_device
             )
     
 
