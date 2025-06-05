@@ -4,15 +4,6 @@
 
 ## 快速开始
 
-### 自动迁移到UV（推荐）
-
-如果你是从conda环境迁移，可以使用自动迁移脚本：
-
-```bash
-cd ai_exam
-./migrate_to_uv.sh
-```
-
 ### 手动安装UV
 
 ```bash
