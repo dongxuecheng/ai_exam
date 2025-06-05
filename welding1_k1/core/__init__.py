@@ -1,4 +1,4 @@
-"""Core package for welding3 K2 detection service."""
+"""Core package for Welding1 K1 detection service."""
 
 from .config import config, logger, service_name
 

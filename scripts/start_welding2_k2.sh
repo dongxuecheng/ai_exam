@@ -1,28 +1,8 @@
 #!/bin/bash
 
-# Activate conda environment
-eval "$(conda shell.bash hook)"
-conda activate fastapi
+# Load YAML-based configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/yaml_common.sh"
 
-# Configuration
-PORT=5003
-HOST="127.0.0.1"
-
-# Check if port is in use and kill processes
-echo "Checking port ${PORT}..."
-if lsof -Pi :${PORT} -sTCP:LISTEN -t >/dev/null ; then
-    echo "Port ${PORT} is in use. Killing existing processes..."
-    lsof -ti :${PORT} | xargs kill -9
-    echo "Processes on port ${PORT} have been terminated."
-    # Wait a moment for processes to fully terminate
-    sleep 2
-fi
-# Change to the welding_k2 directory
-cd /home/dxc/ai_exam
-# Activate conda environment
-eval "$(conda shell.bash hook)"
-conda activate fastapi
-
-# Run FastAPI application
-echo "Starting FastAPI application..."
-uvicorn welding2_k2.main:app --host ${HOST} --port ${PORT}
+# Start welding2_k2 service using YAML configuration
+start_service "welding2_k2"
