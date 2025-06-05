@@ -15,8 +15,11 @@ wget -qO- https://astral.sh/uv/install.sh | sh
 echo 'eval "$(uv generate-shell-completion bash)"' >> ~/.bashrc
 echo 'eval "$(uvx --generate-shell-completion bash)"' >> ~/.bashrc
 
-# 设置清华源永久
-echo 'export UV_INDEX_URL="https://pypi.tuna.tsinghua.edu.cn/simple"' >> ~/.bashrc
+#也可以使用下面方式安装
+sudo snap install astral-uv --classic
+# 设置清华源永久,将下面代码插入.bashrc的最后一行
+export UV_INDEX_URL="https://pypi.tuna.tsinghua.edu.cn/simple"
+#重新激活bashrc
 source ~/.bashrc
 
 # UV创建虚拟环境
