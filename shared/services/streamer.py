@@ -21,15 +21,10 @@ class BaseVideoStreamer:
         self.num_models = num_models
         self.logger = custom_logger or logger
         
-        # Create frame queues for each model using config queue_size
-        self.frame_queues = []
-        for i in range(self.num_models):
-            # Find max queue size from configs targeting this model
-            max_queue_size = 100  # default
-            for config in stream_configs:
-                if i in config.target_models:
-                    max_queue_size = max(max_queue_size, config.queue_size)
-            self.frame_queues.append(Queue(maxsize=max_queue_size))
+        # Create frame queues for each model using unified queue_size
+        # All queues use the same size from config (assuming all configs have same queue_size)
+        queue_size = stream_configs[0].queue_size if stream_configs else 100
+        self.frame_queues = [Queue(maxsize=queue_size) for _ in range(self.num_models)]
         
         # Process and event management
         self.processes: List[Process] = []
@@ -105,15 +100,22 @@ class BaseVideoStreamer:
                         reconnect_delay = 1.0  # Reset delay on successful connection
                     
                     while not stop_event.is_set():
-                        ret, frame = cap.read()
+                        # Grab frame from buffer without decoding (fast operation)
+                        ret = cap.grab()
                         if not ret:
-                            self.logger.warning(f"Failed to read frame from {config.rtsp_url}")
+                            self.logger.warning(f"Failed to grab frame from {config.rtsp_url}")
                             break
                         
                         frame_count += 1
                         
-                        # Apply frame skip logic
+                        # Apply frame skip logic - only retrieve and decode needed frames
                         if frame_count % config.frame_skip != 0:
+                            continue  # Skip frame without expensive decoding
+                        
+                        # Retrieve and decode the current frame (only for frames we need)
+                        ret, frame = cap.retrieve()
+                        if not ret:
+                            self.logger.warning(f"Failed to retrieve frame from {config.rtsp_url}")
                             continue
 
                         # Distribute frame to all target model queues for this stream
