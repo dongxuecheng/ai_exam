@@ -88,7 +88,7 @@ class BaseVideoStreamer:
         stream_started = False
         reconnect_delay = 1.0
         max_reconnect_delay = 60.0
-        frame_count = 0
+        frame_count = 0  # Manual frame counting - more reliable than CAP_PROP_POS_FRAMES for RTSP
         
         while not stop_event.is_set():
             try:
