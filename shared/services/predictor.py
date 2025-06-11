@@ -1,8 +1,14 @@
 from multiprocessing import Queue, Event, Process
-from ultralytics import YOLO
+#from ultralytics import YOLO
 import logging
 from typing import Union, List
 from .processor import BaseResultProcessor
+from queue import Empty
+
+from .onnx.classify import Classify
+from .onnx.detect import Detect
+from .onnx.segment import Segment
+from .onnx.pose import Pose
 
 # Use basic logging if specific logger not provided
 logger = logging.getLogger("shared_services")
@@ -66,12 +72,14 @@ class BaseYOLOPredictor:
                 self.logger.info(f"{weights_path} inference is running on device {gpu_device}")
 
             while not stop_event.is_set():
-                if frame_queue.empty():
+                try:
+                # if frame_queue.empty():
+                #     continue
+                    frame = frame_queue.get(timeout=1)
+
+                    self._run_inference(model, frame, weights_path)
+                except Empty:
                     continue
-                frame = frame_queue.get()
-
-                self._run_inference(model, frame, weights_path, gpu_device)
-
         except Exception as e:
             self.logger.error(f"Inference error for {weights_path}: {e}")
         finally:
@@ -80,31 +88,37 @@ class BaseYOLOPredictor:
     def _load_model(self, weights_path: str, gpu_device: Union[int, str] = 0):
         try:
             # Load model without immediately setting device
-            model = YOLO(weights_path)
-            return model
+            #model = YOLO(weights_path)
+            if 'detect' in weights_path:
+                onnx_model = Detect(weights_path, device=gpu_device, input_size=(1280,1280))
+            elif 'classify' in weights_path:
+                onnx_model = Classify(weights_path, device=gpu_device)
+            elif 'segment' in weights_path:
+                onnx_model = Segment(weights_path, device=gpu_device, input_size=(1280,1280))
+            elif 'pose' in weights_path:
+                onnx_model = Pose(weights_path, device=gpu_device, input_size=(1280,1280))
+            else:
+                raise ValueError(f"Unknown model type for path: {weights_path}")
+            return onnx_model
         except Exception as e:
             self.logger.error(f"Failed to load model {weights_path}: {e}")
             raise
 
-    def _run_inference(self, model, frame, weights_path, gpu_device: Union[int, str]):
+    def _run_inference(self, model, frame, weights_path):
         try:
-            # Determine device string for predict function
-            if isinstance(gpu_device, str) and gpu_device.lower() == 'cpu':
-                device = 'cpu'
-            elif isinstance(gpu_device, int):
-                device = f'cuda:{gpu_device}'
-            else:
-                device = 'cuda:0'  # fallback
+
             
             # Determine if this is a segmentation model and adjust parameters accordingly
             # Projects can override this method for custom inference logic
-            if 'yolo11l-seg' in weights_path.lower():
-                results = model.predict(frame, verbose=False, conf=0.6, classes=[0], device=device)[0]
-                    # Additional parameters for segmentation models if needed
-            elif 'welding_wearing' in weights_path.lower():
-                results = model.predict(frame, verbose=False, conf=0.6, classes=[0,3,10], device=device)[0]
-            else:
-                results = model.predict(frame, verbose=False, conf=0.6, device=device)[0]
+            # if 'yolo11l-seg' in weights_path.lower():
+            #     results = model.predict(frame, verbose=False, conf=0.6, classes=[0], device=device)[0]
+            #         # Additional parameters for segmentation models if needed
+            # elif 'welding_wearing' in weights_path.lower():
+            #     results = model.predict(frame, verbose=False, conf=0.6, classes=[0,3,10], device=device)[0]
+            # else:
+            #     results = model.predict(frame, verbose=False, conf=0.6, device=device)[0]
+
+            results=model.predict(frame)
             self.result_processor.process_result(results, weights_path)
         except Exception as e:
             self.logger.error(f"Inference failed: {e}")

@@ -63,12 +63,8 @@ class ResultProcessor(BaseResultProcessor):
     def main_fun(self, r, weights_path):
 
         if weights_path==self.weights_paths[0]:#目标检测（油桶和扫把）
-            boxes = r.boxes.xyxy.cpu().numpy()
-            classes = r.boxes.cls.cpu().numpy()
-            
-            for box, cls in zip(boxes, classes):
-                if r.names[int(cls)] == "oil_tank":
-                    box=list(map(int, box))#转换为int类型
+            for box, score, class_name in zip(r.boxes, r.scores, r.class_names):
+                if class_name == "oil_tank" and score > 0.5:
                     center_point = ((box[0]+box[2])//2,(box[1]+box[3])//2)
                     if is_point_in_polygon(center_point, self.SAFE_AREA):
                         self.reset_flag[0] = True#表面油桶不在危险区域，所以需要复位
@@ -78,23 +74,20 @@ class ResultProcessor(BaseResultProcessor):
                         self.exam_flag[0]=False#油桶已经检测到，所以还没有排除油桶
 
 
-                elif r.names[int(cls)] == "sweep":
-                    box=list(map(int, box))
+                elif class_name == "sweep" and score > 0.5:
                     center_point = ((box[0]+box[2])//2,(box[1]+box[3])//2)
                     if not is_point_in_polygon(center_point, self.SAFE_AREA):#表明扫把在工作区
                         self.exam_flag[21]=True
                     
                         
         elif weights_path==self.weights_paths[1]:#焊机垂直向下的分割，检测焊机二次线的视角
-            if r.masks is not None:
-                masks = r.masks.xy #已经是list数组了
-                #Todo: 加上判断分割出的物体是否是人
-                for mask in masks:
+            for box, score, class_name,mask in zip(r.boxes, r.scores, r.class_names,r.masks):
+                if class_name == "person" and score > 0.5 and mask is not None:
+
                     iou1=calculate_mask_rect_iou(mask, self.FIRST_LINE_AREA)#一次线
                     iou2=calculate_mask_rect_iou(mask, self.WELDING_MACHINE_AREA)#焊机
                     iou3=calculate_mask_rect_iou(mask, self.GUN_SECONDARY_LINE_AREA)#焊枪二次线区域
                     iou4=calculate_mask_rect_iou(mask, self.GROUND_SECONDARY_LINE_AREA)#接地夹二次线区域
-                    #logger.info(f"iou1:{iou1},iou2:{iou2},iou3:{iou3},iou4:{iou4}")
                     if iou1>0.01:
                         self.exam_flag[1]=True#一次线
                     if iou2>0.1:
@@ -107,19 +100,15 @@ class ResultProcessor(BaseResultProcessor):
 
 
         elif weights_path==self.weights_paths[2]:#目标检测开关灯，焊机，焊枪，搭铁线
-            boxes = r.boxes.xyxy.cpu().numpy()
-            classes = r.boxes.cls.cpu().numpy()
             
             self.reset_flag[2] = True
             self.reset_flag[1] = True
 
-            for box, cls in zip(boxes, classes):
-                #logger.info(r.names[int(cls)] )
-
-                if r.names[int(cls)] == "welding_gun":
+            for box, score, class_name in zip(r.boxes, r.scores, r.class_names):
+                if class_name == "welding_gun":
                     #logger.info('焊枪')
                     #logger.info(self.GUN_SECONDARY_LINE_AREA)
-                    if is_boxes_intersect(tuple(map(int, box)), self.GUN_GROUND_DEFAULT_AREA):#(x1,y1,x2,y2)
+                    if is_boxes_intersect(tuple(box), self.GUN_GROUND_DEFAULT_AREA):#(x1,y1,x2,y2)
                         self.reset_flag[1] = False #焊枪在指定区域，不需要复位
                         #logger.info('焊枪不需要复位')
                         if self.exam_flag[20]:#完成焊接作业
@@ -127,9 +116,9 @@ class ResultProcessor(BaseResultProcessor):
                     else:
                         self.exam_flag[22]=False 
 
-                elif r.names[int(cls)] == "grounding_wire":#TODO 多了个空格
+                elif class_name == "grounding_wire":#TODO 多了个空格
                     #logger.info('搭铁线')
-                    if is_boxes_intersect(tuple(map(int, box)), self.GUN_GROUND_DEFAULT_AREA):
+                    if is_boxes_intersect(tuple(box), self.GUN_GROUND_DEFAULT_AREA):
                         self.reset_flag[2] = False
                         #logger.info('搭铁线没有复位')
                         if self.exam_flag[20]:
@@ -137,23 +126,23 @@ class ResultProcessor(BaseResultProcessor):
                     else:
                         self.exam_flag[23]=False
 
-                elif r.names[int(cls)] == "red_light_on":#红灯亮,打开总开关
+                elif class_name == "red_light_on":#红灯亮,打开总开关
                     self.reset_flag[3]=True
                     self.exam_flag[6]=True
 
 
 
-                elif r.names[int(cls)] == "green_light_on":#绿灯亮，打开漏电保护开关
+                elif class_name == "green_light_on":#绿灯亮，打开漏电保护开关
                     self.reset_flag[4]=True
                     self.exam_flag[7]=True
 
-                elif r.names[int(cls)] == "red_light_off":#红灯灭，关闭总开关
+                elif class_name == "red_light_off":#红灯灭，关闭总开关
                     self.reset_flag[3]=False
                     if self.exam_flag[6]:
                         self.exam_flag[17]=True
                         self.exam_flag[18]=True
 
-                elif r.names[int(cls)] == "green_light_off":#绿灯灭，关闭漏电保护开关
+                elif class_name == "green_light_off":#绿灯灭，关闭漏电保护开关
                     self.reset_flag[4]=False
                     if self.exam_flag[7]:
                         self.exam_flag[16]=True
@@ -162,29 +151,27 @@ class ResultProcessor(BaseResultProcessor):
                 self.exam_flag[10]=True
 
         if weights_path==self.weights_paths[3]:#目标检测（焊台上的搭铁线，焊件，刷子，铁锤）
-            boxes = r.boxes.xyxy.cpu().numpy()
-            classes = r.boxes.cls.cpu().numpy()
             brush_flag=False
             hammer_flag=False
-            for box, cls in zip(boxes, classes):
-                if r.names[int(cls)] == "grounding_wire":#接地夹
-                    if is_boxes_intersect(tuple(map(int, box)), self.GROUNDING_WIRE_AREA):
+            for box, score, class_name in zip(r.boxes, r.scores, r.class_names):
+                if class_name == "grounding_wire":#接地夹
+                    if is_boxes_intersect(tuple(box), self.GROUNDING_WIRE_AREA):
                         self.exam_flag[9]=True#夹好接地夹
 
 
-                elif r.names[int(cls)] == "welding_piece":#焊件
-                    if is_boxes_intersect(tuple(map(int, box)), self.WELDING_PIECE_AREA):
+                elif class_name == "welding_piece":#焊件
+                    if is_boxes_intersect(tuple(box), self.WELDING_PIECE_AREA):
                         self.exam_flag[11]=True
                 
-                elif r.names[int(cls)] == "brush":#刷子
+                elif class_name == "brush":#刷子
                     brush_flag=True
                     if self.exam_flag[13]:
-                        if is_boxes_intersect(tuple(map(int, box)), self.GROUNDING_WIRE_AREA):
+                        if is_boxes_intersect(tuple(box), self.GROUNDING_WIRE_AREA):
                             self.exam_flag[19]=True
-                elif r.names[int(cls)] == "hammer":#铁锤
+                elif class_name == "hammer":#铁锤
                     hammer_flag=True
                     if self.exam_flag[13]:
-                        if is_boxes_intersect(tuple(map(int, box)), self.GROUNDING_WIRE_AREA):
+                        if is_boxes_intersect(tuple(box), self.GROUNDING_WIRE_AREA):
                             self.exam_flag[19]=True
 
             if not brush_flag and not hammer_flag and self.exam_flag[19]:
@@ -193,8 +180,10 @@ class ResultProcessor(BaseResultProcessor):
 
 
         elif weights_path==self.weights_paths[4]:#分类，焊台
-            label=r.names[r.probs.top1]
-            if label=="welding":
+
+            top_class = r.class_names[0]
+            top_score = r.scores[0]
+            if top_class=="welding" and top_score>0.5:
                 self.exam_flag[12]=True
                 self.exam_flag[13]=True
                 self.exam_flag[14]=True#TODO 取下接地夹 临时操作
@@ -202,12 +191,11 @@ class ResultProcessor(BaseResultProcessor):
             
         elif weights_path==self.weights_paths[5]:# 焊机开关
             
-            classes = r.boxes.cls.cpu().numpy()
-            for cls in classes:
-                if r.names[int(cls)] == "welding_switch_on":
+            for box, score, class_name in zip(r.boxes, r.scores, r.class_names):
+                if class_name == "welding_switch_on" and score > 0.5:
                     self.reset_flag[5] = True
                     self.exam_flag[8]=True
-                elif r.names[int(cls)] == "welding_switch_off":
+                elif class_name == "welding_switch_off" and score>0.5:
                     self.reset_flag[5] = False
                     if self.exam_flag[8]:
                         self.exam_flag[15]=True           

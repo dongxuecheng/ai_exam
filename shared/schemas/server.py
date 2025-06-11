@@ -22,8 +22,8 @@ class ServerConfig(BaseModel):
     
     @field_validator('gpu_device')
     def validate_gpu_device(cls, v):
-        if isinstance(v, str) and v != 'cpu':
-            raise ValueError("GPU device must be an integer (device ID) or 'cpu'")
+        # if isinstance(v, str) and v != 'cpu':
+        #     raise ValueError("GPU device must be an integer (device ID) or 'cpu'")
         if isinstance(v, int) and v < 0:
             raise ValueError("GPU device ID must be non-negative")
         return v
