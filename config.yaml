@@ -77,7 +77,7 @@ services:
       port: 5002
       static_mount_path: /welding1_k2
     
-    gpu_device: cuda:1  # GPU device for this service
+    gpu_device: cuda:0  # GPU device for this service
     
     models:
       - onnx/detect_welding_oil_tank_last.onnx

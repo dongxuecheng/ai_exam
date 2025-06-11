@@ -72,6 +72,7 @@ class BaseDetectionManager:
         if self.stream_manager and self.inference_manager:
             # 必须先停止视频流，再停止推理
             self.stream_manager.stop_streams()
+            print('------------')
             self.inference_manager.stop_inference()
             self.stream_manager = None
             self.inference_manager = None

@@ -31,8 +31,10 @@ class BaseVideoStreamer:
         self.start_events = [Event() for _ in range(len(stream_configs))]
         self.stop_events = [Event() for _ in range(len(stream_configs))]
         self.reconnect_delays = [1.0] * len(stream_configs)  # Exponential backoff delays
+        
 
     def start_streams(self):
+        
         for i, config in enumerate(self.stream_configs):
             process = Process(
                 target=self._fetch_video_stream,
@@ -53,20 +55,19 @@ class BaseVideoStreamer:
             
         for process in self.processes:
             try:
-                process.join(timeout=5)  # Increased timeout
+                process.join(timeout=1)  # Increased timeout
                 if process.is_alive():
-                    self.logger.warning(f"Terminating process {process.pid}")
+                    self.logger.warning(f"Strean Terminating process {process.pid}")
                     process.terminate()
-                    process.join(timeout=2)
+                    process.join(timeout=1)
                     if process.is_alive():
-                        self.logger.error(f"Force killing process {process.pid}")
+                        self.logger.error(f"Stream Force killing process {process.pid}")
                         process.kill()
             except Exception as e:
                 self.logger.error(f"Failed to stop inference process {process.pid}: {e}")
         
         # Clear queues to prevent memory leaks
-        self._clear_queues()
-        
+        #self._clear_queues()
         self.processes.clear()
         self.logger.info("All streams stopped")
     

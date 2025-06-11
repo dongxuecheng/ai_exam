@@ -57,6 +57,10 @@ class BaseYOLOPredictor:
                 process.join(timeout=1)
                 if process.is_alive():
                     process.terminate()
+                    process.join(timeout=2)
+                    if process.is_alive():
+                        self.logger.error(f"Model Force killing process {process.pid}")
+                        process.kill()                    
             except Exception as e:
                 self.logger.error(f"Failed to stop inference process {process.pid}: {e}")
 
