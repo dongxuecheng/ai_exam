@@ -132,9 +132,9 @@ services:
   welding3_k2:
     server:
       port: 5007
-      static_mount_path: /welding3_k2
+      static_mount_path: /welding4_k2
     
-    gpu_device: 1  # GPU device for this service
+    gpu_device: 0  # GPU device for this service
     
     models:
       - welding_oil_tank_last.pt
@@ -157,3 +157,27 @@ services:
         models: [welding_desk_last.pt, welding_cls_last.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.238/cam/realmonitor?channel=1&subtype=0
         models: [welding_switch_last.pt]
+
+  # Welding34 K2 Service
+  welding4_k2:
+    server:
+      port: 5009
+      static_mount_path: /welding3_k2
+    
+    gpu_device: 1  # GPU device for this service
+    
+    models:
+      - welding_oil_tank_last.pt
+      - yolo11l-seg1.pt
+      - yolo11l-seg2.pt
+      - backfire.pt
+    
+    streams:
+      - url: rtsp://admin:yaoan1234@172.16.22.230/cam/realmonitor?channel=1&subtype=0
+        models: [welding_oil_tank_last.pt]
+      - url: rtsp://admin:yaoan1234@172.16.22.231/cam/realmonitor?channel=1&subtype=0
+        models: [yolo11l-seg1.pt]
+      - url: rtsp://admin:yaoan1234@172.16.22.247/cam/realmonitor?channel=1&subtype=0
+        models: [yolo11l-seg2.pt]
+      - url: rtsp://admin:yaoan1234@172.16.22.232/cam/realmonitor?channel=1&subtype=0
+        models: [backfire.pt]
