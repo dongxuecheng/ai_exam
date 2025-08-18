@@ -1,0 +1,146 @@
+# AI Exam System Configuration
+# =========================================
+# Central YAML configuration for all services
+# =========================================
+
+global:
+  project_dir: /home/ubuntu/ai_exam-refactor-optimization
+  uv_env: .venv
+  ip: 192.168.1.10
+  defaults:
+    queue_size: 100
+    frame_skip: 10
+
+services:
+  # Sling K2 Service
+  sling_k2:
+    server:
+      port: 5006
+      static_mount_path: /sling_k2
+    
+    models:
+      - yolo11x-pose1.pt
+      - yz_oil_tank.pt
+      - yolo11x-pose2.pt
+      - yz_grounding_wire.pt
+    
+    streams:
+      - url: rtsp://admin:yaoan1234@172.16.22.238/cam/realmonitor?channel=1&subtype=0
+        models: [yolo11x-pose1.pt, yz_oil_tank.pt]
+      - url: rtsp://admin:yaoan1234@172.16.22.44/cam/realmonitor?channel=1&subtype=0
+        models: [yolo11x-pose2.pt, yz_grounding_wire.pt]
+
+  # Basket K2 Service
+  basket_k2:
+    server:
+      port: 5005
+      static_mount_path: /basket_k2
+    
+    models:
+      - yolo11l-pose1.pt
+      - yz_oil_tank.pt
+      - yolo11l-pose2.pt
+      - yz_grounding_wire.pt
+    
+    streams:
+      - url: rtsp://admin:yaoan1234@172.16.22.237/cam/realmonitor?channel=1&subtype=0
+        models: [yolo11l-pose1.pt]
+      - url: rtsp://admin:yaoan1234@172.16.22.230/cam/realmonitor?channel=1&subtype=0
+        models: [yz_oil_tank.pt]
+      - url: rtsp://admin:yaoan1234@172.16.22.242/cam/realmonitor?channel=1&subtype=0
+        models: [yolo11l-pose2.pt, yz_grounding_wire.pt]
+
+  # Welding1 K1 Service
+  welding1_k1:
+    server:
+      port: 5001
+      static_mount_path: /welding1_k1
+    
+    models:
+      - yolo11n-pose.pt
+      - jidian/welding_wearing.pt
+    
+    streams:
+      - url: rtsp://admin:yaoan1234@172.16.22.235/cam/realmonitor?channel=1&subtype=0
+        models: [yolo11n-pose.pt, jidian/welding_wearing.pt]
+
+  # Welding1 K2 Service
+  welding1_k2:
+    server:
+      port: 5002
+      static_mount_path: /welding1_k2
+    
+    models:
+      - jidian/welding_oil_tank.pt
+      - yolo11l-seg.pt
+      - jidian/welding_light_view.pt
+      - jidian/welding_desk.pt
+      - jidian/welding_cls.pt
+      - jidian/welding_switch.pt
+    
+    streams:
+      - url: rtsp://admin:ya147369@@192.168.1.125/cam/realmonitor?channel=1&subtype=0
+        models: [jidian/welding_oil_tank.pt]
+      - url: rtsp://admin:ya147369@@192.168.1.109/cam/realmonitor?channel=1&subtype=0
+        models: [yolo11l-seg.pt]
+      - url: rtsp://admin:ya147369@@192.168.1.124/cam/realmonitor?channel=1&subtype=0
+        models: [jidian/welding_light_view.pt]
+      - url: rtsp://admin:ya147369@@192.168.1.110/cam/realmonitor?channel=1&subtype=0
+        models: [jidian/welding_desk.pt, jidian/welding_cls.pt]
+      - url: rtsp://admin:ya147369@@192.168.1.126/cam/realmonitor?channel=1&subtype=0
+        models: [jidian/welding_switch.pt]
+
+  # Welding2 K2 Service 氩弧焊
+  welding2_k2:
+    server:
+      port: 5004
+      static_mount_path: /welding2_k2
+    
+    models:
+      - welding_oil_tank_last.pt
+      - yolo11l-seg1.pt
+      - welding_light_last.pt
+      - yolo11l-seg2.pt
+      - welding_desk_last.pt
+      - welding_cls_last.pt
+      - welding_switch_last.pt
+    
+    streams:
+      - url: rtsp://admin:ya147369@@192.168.1.130/cam/realmonitor?channel=1&subtype=0
+        models: [welding_oil_tank_last.pt]
+      - url: rtsp://admin:ya147369@@192.168.1.145/cam/realmonitor?channel=1&subtype=0
+        models: [yolo11l-seg1.pt]
+      - url: rtsp://admin:ya147369@@192.168.1.141/cam/realmonitor?channel=1&subtype=0
+        models: [welding_light_last.pt, yolo11l-seg2.pt]
+      - url: rtsp://admin:ya147369@@192.168.1.133/cam/realmonitor?channel=1&subtype=0
+        models: [welding_desk_last.pt, welding_cls_last.pt]
+      - url: rtsp://admin:ya147369@@192.168.1.140/cam/realmonitor?channel=1&subtype=0
+        models: [welding_switch_last.pt]
+
+  # Welding3 K2 Service 二氧化碳
+  welding3_k2:
+    server:
+      port: 5006
+      static_mount_path: /welding3_k2
+    
+    models:
+      - welding_oil_tank_last.pt
+      - yolo11l-seg1.pt
+      - welding_light_last1.pt
+      - yolo11l-seg2.pt
+      - welding_desk_last.pt
+      - welding_cls_last.pt
+      - welding_switch_last.pt
+      - welding_light_last2.pt
+    
+    streams:
+      - url: rtsp://admin:ya147369@@192.168.1.135/cam/realmonitor?channel=1&subtype=0
+        models: [welding_oil_tank_last.pt, welding_light_last2.pt]
+      - url: rtsp://admin:ya147369@@192.168.1.137/cam/realmonitor?channel=1&subtype=0
+        models: [yolo11l-seg1.pt]
+      - url: rtsp://admin:ya147369@@192.168.1.132/cam/realmonitor?channel=1&subtype=0
+        models: [welding_light_last1.pt, yolo11l-seg2.pt]
+      - url: rtsp://admin:ya147369@@192.168.1.139/cam/realmonitor?channel=1&subtype=0
+        models: [welding_desk_last.pt, welding_cls_last.pt]
+      - url: rtsp://admin:ya147369@@192.168.1.144/cam/realmonitor?channel=1&subtype=0
+        models: [welding_switch_last.pt]
