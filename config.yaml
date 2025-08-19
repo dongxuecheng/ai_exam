@@ -22,16 +22,11 @@ services:
     gpu_device: 0  # GPU device for this service
     
     models:
-      - yolo11x-pose1.pt
-      - yz_oil_tank.pt
-      - yolo11x-pose2.pt
-      - yz_grounding_wire.pt
-    
+      - gc_top_view.pt #brush,safety_belt,self_lock,warning_zone
+      - yolo11l-pose1.pt
     streams:
-      - url: rtsp://admin:yaoan1234@172.16.22.238/cam/realmonitor?channel=1&subtype=0
-        models: [yolo11x-pose1.pt, yz_oil_tank.pt]
-      - url: rtsp://admin:yaoan1234@172.16.22.44/cam/realmonitor?channel=1&subtype=0
-        models: [yolo11x-pose2.pt, yz_grounding_wire.pt]
+      - url: rtsp://admin:yaoan1234@172.16.22.230/cam/realmonitor?channel=1&subtype=0
+        models: [yolo11l-pose1.pt, gc_top_view.pt]
 
   # Basket K2 Service
   basket_k2:
@@ -42,18 +37,13 @@ services:
     gpu_device: 1  # GPU device for this service
     
     models:
+      - gc_top_view.pt #brush,safety_belt,self_lock,warning_zone
       - yolo11l-pose1.pt
-      - yz_oil_tank.pt
-      - yolo11l-pose2.pt
-      - yz_grounding_wire.pt
+      - hoist.pt #提升机
     
     streams:
-      - url: rtsp://admin:yaoan1234@172.16.22.237/cam/realmonitor?channel=1&subtype=0
-        models: [yolo11l-pose1.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.230/cam/realmonitor?channel=1&subtype=0
-        models: [yz_oil_tank.pt]
-      - url: rtsp://admin:yaoan1234@172.16.22.242/cam/realmonitor?channel=1&subtype=0
-        models: [yolo11l-pose2.pt, yz_grounding_wire.pt]
+        models: [yolo11l-pose1.pt, hoist.pt,gc_top_view.pt]
 
   # Welding1 K1 Service
   welding1_k1:
@@ -155,7 +145,7 @@ services:
         models: [welding_light_last1.pt, yolo11l-seg2.pt]
       - url: rtsp://admin:yaoan1234@172.16.22.232/cam/realmonitor?channel=1&subtype=0
         models: [welding_desk_last.pt, welding_cls_last.pt]
-      - url: rtsp://admin:yaoan1234@172.16.22.238/cam/realmonitor?channel=1&subtype=0
+      - url: rtsp://admin:yaoan1234@172.16.22.234/cam/realmonitor?channel=1&subtype=0
         models: [welding_switch_last.pt]
 
   # Welding34 K2 Service
