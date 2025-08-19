@@ -6,31 +6,18 @@ from shared.services import BaseResultProcessor
 
 class ResultProcessor(BaseResultProcessor):
 
-    
-    # SAFE_AREA = [(1012,0),(996,382),(1764,396),(1905,0)]#油桶和扫把安全区域
-
-    # FIRST_LINE_AREA = (644, 879, 926, 1245)#一次线区域
-    # WELDING_MACHINE_AREA = (936, 880, 1546, 1279)#焊机区域
-    # GUN_SECONDARY_LINE_AREA = (1578, 1028, 1866, 1116)#焊枪二次线区域
-    # GROUND_SECONDARY_LINE_AREA = (1574, 1196, 1841, 1264)#接地夹二次线区域
-
-    # GUN_GROUND_DEFAULT_AREA = (649, 476, 1107, 918)#焊枪接地夹默认区域
-
-    # GROUNDING_WIRE_AREA = (623, 252, 2026, 1379)#焊台上的搭铁线
-    # WELDING_PIECE_AREA = (966, 700, 1558, 1101)#焊台上的焊件区域
-
     #机电学院焊接区域
-    SAFE_AREA = [(1563, 0), (1520, 399), (2006, 554), (2159, 0)]#油桶和扫把安全区域
+    SAFE_AREA = [(1560, 3), (1524, 409), (1999, 557), (2156, 0)]#油桶和扫把安全区域
 
-    FIRST_LINE_AREA = (644, 879, 926, 1245)#一次线区域
-    WELDING_MACHINE_AREA = (936, 880, 1546, 1279)#焊机区域
-    GUN_SECONDARY_LINE_AREA = (1578, 1028, 1866, 1116)#焊枪二次线区域
-    GROUND_SECONDARY_LINE_AREA = (1574, 1196, 1841, 1264)#接地夹二次线区域
+    FIRST_LINE_AREA = (662, 976, 1421, 1407)#一次线区域
+    WELDING_MACHINE_AREA = (948, 293, 1397, 1091)#焊机区域
+    GUN_SECONDARY_LINE_AREA = (1026, 212, 1363, 304)#焊枪二次线区域
+    GROUND_SECONDARY_LINE_AREA = (1026, 212, 1363, 304)#接地夹二次线区域
 
-    GUN_GROUND_DEFAULT_AREA = (649, 476, 1107, 918)#焊枪接地夹默认区域
+    GUN_GROUND_DEFAULT_AREA = (1053, 221, 1774, 768)#焊枪接地夹默认区域
 
-    GROUNDING_WIRE_AREA = (623, 252, 2026, 1379)#焊台上的搭铁线
-    WELDING_PIECE_AREA = (966, 700, 1558, 1101)#焊台上的焊件区域
+    GROUNDING_WIRE_AREA = (546, 268, 1941, 1431)#焊台上的搭铁线
+    WELDING_PIECE_AREA = (675, 346, 1842, 1427)#焊台上的焊件区域
 
     def __init__(self,weights_paths: list[str],images_dir, img_url_path):
         super().__init__(weights_paths,images_dir,img_url_path)
@@ -121,6 +108,7 @@ class ResultProcessor(BaseResultProcessor):
                     #logger.info(self.GUN_SECONDARY_LINE_AREA)
                     if is_boxes_intersect(tuple(map(int, box)), self.GUN_GROUND_DEFAULT_AREA):#(x1,y1,x2,y2)
                         self.reset_flag[1] = False #焊枪在指定区域，不需要复位
+                        self.reset_flag[2] = False
                         #logger.info('焊枪不需要复位')
                         if self.exam_flag[20]:#完成焊接作业
                             self.exam_flag[22]=True
@@ -131,11 +119,19 @@ class ResultProcessor(BaseResultProcessor):
                     #logger.info('搭铁线')
                     if is_boxes_intersect(tuple(map(int, box)), self.GUN_GROUND_DEFAULT_AREA):
                         self.reset_flag[2] = False
+                        self.reset_flag[1] = False
                         #logger.info('搭铁线没有复位')
                         if self.exam_flag[20]:
                             self.exam_flag[23]=True
                     else:
                         self.exam_flag[23]=False
+                    
+                    box=list(map(int, box))#转换为int类型
+                    center_point = ((box[0]+box[2])//2,(box[1]+box[3])//2)
+                    #[(1532, 1188), (1670, 1439), (2053, 1439), (1801, 1130)]
+                    if is_point_in_polygon(center_point, [(1532, 1188), (1670, 1439), (2053, 1439), (1801, 1130)]):
+                        self.exam_flag[9]=True#夹好接地夹
+                    
 
                 elif r.names[int(cls)] == "red_light_on":#红灯亮,打开总开关
                     self.reset_flag[3]=True
@@ -276,7 +272,12 @@ class ResultProcessor(BaseResultProcessor):
             for flag, step in exam_steps[weights_path]:
                 if flag and step not in self.exam_imgs:
                     self.save_image_exam(self.exam_imgs, r, step, self.exam_order)
-                    self.exam_score[step]=8#TODO:计算分数,临时测试,10分值
+                    if step == 'welding_exam_21':        
+                        self.exam_score['welding_exam_21']=8#TODO:计算分数,临时测试,10分值
+                    else:
+                        self.exam_score[step]=0
+
+                    #self.exam_score[step]=8#TODO:计算分数,临时测试,10分值
                      
     def save_image_reset(self,welding_reset_imgs,r, step_name):#保存图片
         save_time = datetime.now().strftime('%Y%m%d_%H%M')
