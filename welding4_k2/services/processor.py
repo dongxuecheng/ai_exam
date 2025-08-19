@@ -13,15 +13,9 @@ class ResultProcessor(BaseResultProcessor):
 
     WINDPIPE_AREA = (644, 879, 926, 1245)#一次线区域
     WELDING_GUN_AREA = (936, 880, 1546, 1279)#焊机区域
-    VAVLE_AREA = (1578, 1028, 1866, 1116)#焊枪二次线区域
-    GROUND_SECONDARY_LINE_AREA = (1574, 1196, 1841, 1264)#接地夹二次线区域
+    VAVLE_AREA = (1578, 1028, 1866, 1116)#气管区域
+    WELDING_TABLE_AREA = [(1563, 0), (1520, 399), (2006, 554), (2159, 0)]#焊台区域
 
-    GAS_CYLINDER_AREA = (644, 879, 926, 1245)#气瓶区域
-
-    GUN_GROUND_DEFAULT_AREA = (649, 476, 1107, 918)#焊枪接地夹默认区域，这里要改成油桶视角下的
-
-    GROUNDING_WIRE_AREA = (623, 252, 2026, 1379)#焊台上的搭铁线
-    WELDING_PIECE_AREA = (966, 700, 1558, 1101)#焊台上的焊件区域
 
     def __init__(self,weights_paths: list[str],images_dir, img_url_path):
         super().__init__(weights_paths,images_dir,img_url_path)
@@ -117,9 +111,21 @@ class ResultProcessor(BaseResultProcessor):
 
 
                 if r.names[int(cls)] == "iron_sheet":#焊件
-                    self.reset_flag[2]=True
-                    self.exam_flag[4]=True
-                    iron_sheet_nums += 1
+                    
+
+                    box=list(map(int, box))#转换为int类型
+                    # Calculate the area of the detection box
+                    
+                    center_point = ((box[0]+box[2])//2,(box[1]+box[3])//2)
+                    if is_point_in_polygon(center_point, self.WELDING_TABLE_AREA):
+                        self.reset_flag[2]=True
+                        self.exam_flag[4]=True
+                        box_area = (box[2] - box[0]) * (box[3] - box[1])
+                        if box_area < 10000:  # 假设面积大于10000为有效焊件
+                            iron_sheet_nums += 1
+                    logger.info(f"box_area: {box_area}")
+                    
+
 
 
             if iron_sheet_nums > 1:
@@ -148,19 +154,19 @@ class ResultProcessor(BaseResultProcessor):
             self.weights_paths[0]: [
             (self.exam_flag[0], 'welding_exam_1')
             ],
-            #分割模型，焊机视角
+            #分割模型
             self.weights_paths[1]: [
             (self.exam_flag[1], 'welding_exam_2'),
             (self.exam_flag[2], 'welding_exam_3')
             ],
-            #分割模型，气瓶视角
+            #分割模型
             self.weights_paths[2]: [
             (self.exam_flag[3], 'welding_exam_4'),
             (self.exam_flag[6], 'welding_exam_7'),
             (self.exam_flag[7], 'welding_exam_8'),
             (self.exam_flag[8], 'welding_exam_9'),
             ],
-            #目标检测，开关灯视角
+            #目标检测
             self.weights_paths[3]: [
             (self.exam_flag[4], 'welding_exam_5'),
             (self.exam_flag[5], 'welding_exam_6')
