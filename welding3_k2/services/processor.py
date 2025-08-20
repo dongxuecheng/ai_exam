@@ -25,7 +25,7 @@ class ResultProcessor(BaseResultProcessor):
     def __init__(self,weights_paths: list[str],images_dir, img_url_path):
         super().__init__(weights_paths,images_dir,img_url_path)
 
-        self.reset_flag = Array('b', [True] * 6)
+        self.reset_flag = Array('b', [False] * 6)
         self.exam_flag = Array('b', [False] * 23)
         self.manager = Manager()
         self.reset_imgs = self.manager.dict()
@@ -43,7 +43,7 @@ class ResultProcessor(BaseResultProcessor):
 
     def init_reset_variables(self):
         for i in range(len(self.reset_flag)):
-            self.reset_flag[i] = True
+            self.reset_flag[i] = False
         self.reset_imgs.clear()
 
     def process_result(self, r, weights_path):
@@ -65,7 +65,7 @@ class ResultProcessor(BaseResultProcessor):
                         self.exam_flag[0]=True#油桶已经排除在危险区域外
                     else:
                         self.reset_flag[0] = False#表面油桶在危险区域，所以不需要复位
-                        self.exam_flag[0]=False#油桶已经检测到，所以还没有排除油桶
+                        #self.exam_flag[0]=False#油桶已经检测到，所以还没有排除油桶
 
 
                 elif r.names[int(cls)] == "sweep":
