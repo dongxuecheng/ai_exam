@@ -32,10 +32,7 @@ class ResultProcessor(BaseResultProcessor):
 
     # 清洗工作区
     WORK_REGIONS = [
-        (0, 0, 400, 400),       # 左上区域 (x1, y1, x2, y2)
-        (0, 680, 400, 1080),    # 左下区域
-        (1520, 0, 1920, 400),   # 右上区域
-        (1520, 680, 1920, 1080) # 右下区域
+        (0, 1009, 630, 1298),     
     ]
 
     def __init__(self,weights_paths: list[str],images_dir, img_url_path):
@@ -79,8 +76,7 @@ class ResultProcessor(BaseResultProcessor):
                                 self.exam_flag[10]=True   
                                 self.exam_flag[11]=True         
                                 break
-                                
-                                
+                                                                
                     except (IndexError, ValueError) as e:
                         logger.error(f"处理关键点时出错: {e}")
                         continue
@@ -88,10 +84,9 @@ class ResultProcessor(BaseResultProcessor):
         if weights_path==self.weights_paths[1]:#hoist
             boxes = r.boxes.xyxy.cpu().numpy()
             classes = r.boxes.cls.cpu().numpy()
-            #self.warning_zone_flag[0]=False
             for box, cls in zip(boxes, classes):
                 if r.names[int(cls)] == "hoist":#当提升机与我指定的区域相交时
-                    if is_boxes_intersect(tuple(map(int, box)), (0, 0, 1920, 1080)) or is_boxes_intersect(tuple(map(int, box)), (233, 456, 565, 999)):
+                    if is_boxes_intersect(tuple(map(int, box)), (1336, 282, 1540, 537)) or is_boxes_intersect(tuple(map(int, box)), (702, 317, 906, 572)):
                         logger.info(f"空载")
                         self.exam_flag[0]=True
                         self.exam_flag[1]=True
@@ -112,7 +107,7 @@ class ResultProcessor(BaseResultProcessor):
             
             for box, cls in zip(boxes, classes):
                 if r.names[int(cls)] == "brush":#刷子出现在指定区域则完成清洗
-                    if is_boxes_intersect(tuple(map(int, box)), (0, 0, 1920, 1080)):
+                    if is_boxes_intersect(tuple(map(int, box)), (0, 687, 810, 1439)):
                         self.exam_flag[9]=True        
                         self.exam_flag[10]=True   
                         self.exam_flag[11]=True           

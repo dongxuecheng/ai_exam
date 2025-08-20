@@ -16,16 +16,13 @@ class ResultProcessor(BaseResultProcessor):
     # ]
     # 清洗工作区
     WORK_REGIONS = [
-        (0, 0, 400, 400),       # 左上区域 (x1, y1, x2, y2)
-        (0, 680, 400, 1080),    # 左下区域
-        (1520, 0, 1920, 400),   # 右上区域
-        (1520, 680, 1920, 1080) # 右下区域
+        (854, 1021, 1599, 1236),       
     ]
 
     def __init__(self,weights_paths: list[str],images_dir, img_url_path):
         super().__init__(weights_paths, images_dir, img_url_path)
         self.exam_flag = Array('b', [False] * 12)
-        self.warning_zone_flag=Array('b', [False] * 2)#存储两个视角下的警戒区域的检测结果
+        #self.warning_zone_flag=Array('b', [False] * 2)#存储两个视角下的警戒区域的检测结果
         self.manager = Manager()
         self.exam_imgs = self.manager.dict()
         self.exam_order = self.manager.list()
@@ -76,16 +73,12 @@ class ResultProcessor(BaseResultProcessor):
             #self.warning_zone_flag[1]=False
             for box, cls in zip(boxes, classes):
                 if r.names[int(cls)] == "brush":
-                    if is_boxes_intersect(tuple(map(int, box)), (0, 0, 1920, 1080)):
+                    if is_boxes_intersect(tuple(map(int, box)), (854, 846, 1634, 1236)):
                         #logger.info("清洗工作区域")
                         self.exam_flag[9]=True
                         self.exam_flag[10]=True
                         self.exam_flag[11]=True
                 
-                # if r.names[int(cls)] == "warning_zone":
-                #     if is_boxes_intersect(tuple(map(int, box)), (0, 0, 1920, 1080)):
-                #         self.exam_flag[0]=True#警戒区域检测到
-                #         self.warning_zone_flag[1]=True
 
                 if r.names[int(cls)] == "safety_belt":
                     safety_belt_position=tuple(map(int, box))
