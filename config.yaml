@@ -4,9 +4,9 @@
 # =========================================
 
 global:
-  project_dir: /home/dxc/code/ai_exam
+  project_dir: /home/xcd/ai_exam
   uv_env: .venv
-  ip: 127.0.0.1
+  ip: 172.16.23.200
   defaults:
     queue_size: 100
     frame_skip: 10
@@ -34,16 +34,25 @@ services:
       port: 5005
       static_mount_path: /basket_k2
     
-    gpu_device: 1  # GPU device for this service
+    gpu_device: 0  # GPU device for this service
     
     models:
-      - gc_top_view.pt #brush,safety_belt,self_lock,warning_zone
       - yolo11l-pose1.pt
-      - hoist.pt #提升机
+      - basket_warning_zone.pt
+      - yolo11l-pose2.pt
+      - basket_hoist.pt #提升机
+      - basket_up_brush.pt #brush,safety_belt,self_lock,warning_zone
+
+
     
     streams:
-      - url: rtsp://admin:yaoan1234@172.16.22.230/cam/realmonitor?channel=1&subtype=0
-        models: [yolo11l-pose1.pt, hoist.pt,gc_top_view.pt]
+      - url: rtsp://admin:yaoan1234@172.16.23.19/cam/realmonitor?channel=1&subtype=0
+        models: [yolo11l-pose1.pt]
+      - url: rtsp://admin:yaoan1234@172.16.23.13/cam/realmonitor?channel=1&subtype=0
+        models: [basket_warning_zone.pt]
+      - url: rtsp://admin:yaoan1234@172.16.23.14/cam/realmonitor?channel=1&subtype=0
+        models: [yolo11l-pose2.pt, basket_hoist.pt, basket_up_brush.pt]
+
 
   # Welding1 K1 Service
   welding1_k1:

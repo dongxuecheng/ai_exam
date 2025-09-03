@@ -136,19 +136,31 @@ def create_detection_router(
                 
                 # 检查是否是 basket 还是 welding 类型
                 if any('basket' in value for value in exam_order):
-                    # basket 类型
-                    exam_steps = [
-                        {"step": re.search(r'basket_(\d+)', value).group(1), "image": service.get_exam_imgs().get(value)}
-                        for value in exam_order
-                    ]
+                    # basket 类型 - 只包含 step 和 image 字段
+                    exam_steps = []
+                    for value in exam_order:
+                        match = re.search(r'basket_step_(\d+)', value)
+                        if match:
+                            exam_steps.append({
+                                "step": match.group(1), 
+                                "image": service.get_exam_imgs().get(value)
+                            })
+                        else:
+                            logger.warning(f"Failed to parse basket step from: {value}")
                 else:
-                    # welding 类型
-                    exam_steps = [
-                        {"step": re.search(r'welding_exam_(\d+)', value).group(1), 
-                         "image": service.get_exam_imgs().get(value),
-                         "score": service.get_exam_score().get(value)}
-                        for value in exam_order
-                    ]
+                    # welding 类型 - 包含 step, image 和 score 字段
+                    exam_steps = []
+                    for value in exam_order:
+                        match = re.search(r'welding_exam_(\d+)', value)
+                        if match:
+                            exam_steps.append({
+                                "step": match.group(1), 
+                                "image": service.get_exam_imgs().get(value),
+                                "score": service.get_exam_score().get(value)
+                            })
+                        else:
+                            logger.warning(f"Failed to parse welding step from: {value}")
+                
                 return ExamStatusResponse(status="SUCCESS", data=exam_steps)
             except Exception as e:
                 logger.error(f"Status check failed: {e}")

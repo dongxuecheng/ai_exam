@@ -103,6 +103,10 @@ class BaseYOLOPredictor:
                     # Additional parameters for segmentation models if needed
             elif 'welding_wearing' in weights_path.lower():
                 results = model.predict(frame, verbose=False, conf=0.6, classes=[0,3,10], device=device)[0]
+            elif 'yolo11l-pose' in weights_path.lower():
+                results = model.predict(frame, verbose=False, conf=0.7, device=device)[0]
+            elif 'basket_up_brush' in weights_path.lower():
+                results = model.predict(frame, verbose=False, conf=0.6, device=device)[0]
             else:
                 results = model.predict(frame, verbose=False, conf=0.6, device=device)[0]
             self.result_processor.process_result(results, weights_path)
